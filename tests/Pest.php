@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Family;
+use App\Support\Tenancy\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +49,17 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Run a callback as the given family, the way a request or job would.
+ *
+ * @template TReturn
+ *
+ * @param  Closure(): TReturn  $callback
+ * @return TReturn
+ */
+function asFamily(Family $family, Closure $callback): mixed
+{
+    return app(Tenant::class)->for($family, $callback);
 }

@@ -16,6 +16,9 @@ const greeting =
         <Head title="Home" />
 
         <header class="space-y-1">
+            <p v-if="page.props.house" class="text-sm text-muted-foreground">
+                {{ page.props.house.name }}
+            </p>
             <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">
                 {{ greeting }}, {{ firstName }}
             </h1>

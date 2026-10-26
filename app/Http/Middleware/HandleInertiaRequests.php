@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Tenancy\Tenant;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +42,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'house' => fn (): ?array => app(Tenant::class)->resolved()
+                ? app(Tenant::class)->house()->only(['id', 'name'])
+                : null,
         ];
     }
 }

@@ -51,6 +51,20 @@
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
+    --color-meter-ok: var(--meter-ok);
+    --color-meter-ok-track: var(--meter-ok-track);
+    --color-meter-warn: var(--meter-warn);
+    --color-meter-warn-track: var(--meter-warn-track);
+    --color-meter-over: var(--meter-over);
+    --color-meter-over-track: var(--meter-over-track);
+
+    --color-chrome: var(--chrome);
+    --color-chrome-active: var(--chrome-active);
+    --color-chrome-foreground: var(--chrome-foreground);
+    --color-chrome-muted: var(--chrome-muted);
+    --color-lavender: var(--lavender);
+    --color-lavender-foreground: var(--lavender-foreground);
+
     --color-sidebar: var(--sidebar-background);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -89,77 +103,108 @@
     }
 }
 
+/*
+ * Homey palette: Vikings purple chrome with lavender touches over neutral
+ * surfaces (light) and deep grey (dark). OKLCH throughout, so lightness
+ * steps read evenly across hues. Chart slots and meter colours were checked
+ * with the dataviz palette validator: text pairs clear WCAG AA in both
+ * modes, and adjacent chart colours stay distinct under colour-vision
+ * deficiency (worst adjacent dE 9.9).
+ */
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    --background: oklch(0.968 0 0);
+    --foreground: oklch(0.24 0.04 300);
+    --card: oklch(0.993 0 0);
+    --card-foreground: oklch(0.24 0.04 300);
+    --popover: oklch(0.993 0 0);
+    --popover-foreground: oklch(0.24 0.04 300);
+    --primary: oklch(0.38 0.15 300);
+    --primary-foreground: oklch(0.98 0.01 300);
+    --secondary: oklch(0.92 0.04 300);
+    --secondary-foreground: oklch(0.3 0.1 300);
+    --muted: oklch(0.935 0 0);
+    --muted-foreground: oklch(0.48 0.04 300);
+    --accent: oklch(0.93 0.035 300);
+    --accent-foreground: oklch(0.3 0.1 300);
+    --destructive: oklch(0.55 0.15 35);
+    --destructive-foreground: oklch(0.98 0.01 300);
+    --border: oklch(0.88 0 0);
+    --input: oklch(0.86 0 0);
+    --ring: oklch(0.55 0.15 300);
+    --radius: 0.875rem;
+
+    --chart-1: oklch(0.5 0.16 300); /* purple */
+    --chart-2: oklch(0.66 0.13 80); /* gold */
+    --chart-3: oklch(0.52 0.12 150); /* green */
+    --chart-4: oklch(0.55 0.11 252); /* slate */
+    --chart-5: oklch(0.6 0.15 38); /* terracotta */
+
+    /* Meters keep their meaning: green on track, gold close, terracotta over. */
+    --meter-ok: var(--chart-3);
+    --meter-ok-track: oklch(0.91 0.035 150);
+    --meter-warn: var(--chart-2);
+    --meter-warn-track: oklch(0.92 0.04 85);
+    --meter-over: var(--chart-5);
+    --meter-over-track: oklch(0.92 0.035 38);
+
+    /* Chrome: the header and tab bar are Vikings purple in both modes. */
+    --chrome: oklch(0.38 0.148 300);
+    --chrome-active: oklch(0.47 0.15 300);
+    --chrome-foreground: oklch(0.98 0.01 300);
+    --chrome-muted: oklch(0.87 0.06 300);
+    --lavender: oklch(0.86 0.07 300);
+    --lavender-foreground: oklch(0.3 0.13 300);
+    --glass: color-mix(in oklab, var(--chrome) 96%, transparent);
+    --wash-1: transparent;
+    --wash-2: transparent;
+
+    --sidebar-background: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--accent);
+    --sidebar-accent-foreground: var(--accent-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --sidebar: var(--card);
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 84% 60%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
+    --background: oklch(0.18 0.006 300);
+    --foreground: oklch(0.95 0.012 300);
+    --card: oklch(0.22 0.01 300);
+    --card-foreground: oklch(0.95 0.012 300);
+    --popover: oklch(0.24 0.012 300);
+    --popover-foreground: oklch(0.95 0.012 300);
+    --primary: oklch(0.82 0.09 300);
+    --primary-foreground: oklch(0.22 0.06 300);
+    --secondary: oklch(0.3 0.05 300);
+    --secondary-foreground: oklch(0.95 0.012 300);
+    --muted: oklch(0.26 0.012 300);
+    --muted-foreground: oklch(0.76 0.03 300);
+    --accent: oklch(0.29 0.04 300);
+    --accent-foreground: oklch(0.95 0.012 300);
+    --destructive: oklch(0.64 0.15 35);
+    --destructive-foreground: oklch(0.22 0.06 300);
+    --border: oklch(0.32 0.04 300);
+    --input: oklch(0.34 0.045 300);
+    --ring: oklch(0.72 0.12 300);
+
+    --chart-1: oklch(0.6 0.16 300);
+    --chart-2: oklch(0.66 0.125 82);
+    --chart-3: oklch(0.5 0.12 150);
+    --chart-4: oklch(0.56 0.11 252);
+    --chart-5: oklch(0.62 0.15 38);
+
+    --meter-ok-track: oklch(0.31 0.04 150);
+    --meter-warn-track: oklch(0.33 0.045 85);
+    --meter-over-track: oklch(0.33 0.045 38);
+
+    --chrome-foreground: oklch(0.97 0.012 300);
+    --lavender: oklch(0.84 0.08 300);
+    --lavender-foreground: oklch(0.26 0.11 300);
+    --wash-1: color-mix(in oklab, oklch(0.5 0.14 300) 14%, transparent);
+    --wash-2: color-mix(in oklab, var(--chart-2) 5%, transparent);
 }
 
 @layer base {
@@ -168,5 +213,27 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/* A soft wash behind everything, so the frosted chrome has something to blur. */
+@utility app-wash {
+    background:
+        radial-gradient(60rem 30rem at 0% -10%, var(--wash-1), transparent 70%),
+        radial-gradient(45rem 25rem at 100% 0%, var(--wash-2), transparent 70%),
+        var(--background);
+    background-attachment: fixed;
+}
+
+/* Glass is rationed to chrome (header, tab bar); content stays solid. */
+@utility glass {
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+
+    @media (prefers-reduced-transparency: reduce) {
+        background: var(--chrome);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 }

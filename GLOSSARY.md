@@ -66,6 +66,10 @@ _Avoid_: Event, feed, timeline
 **Anchored schedule**:
 Repeats on fixed calendar dates regardless of when it was last done, like a bill due on the 5th.
 
+**Checklist**:
+The ordered steps for doing a task, like turning off the gas before draining the tank. Steps are ticked off fresh each time the task is done; the history records only that it was done.
+_Avoid_: Subtasks, steps list
+
 **Floating schedule**:
 Repeats a set interval after it was last completed, like a furnace filter every three months.
 
@@ -82,6 +86,10 @@ _Avoid_: Renovation (as the general term), job
 **Contractor**:
 A person or company hired to work on a house.
 _Avoid_: Vendor, tradesperson
+
+**Vet**:
+A veterinary clinic the family uses. Each pet has a primary vet and may have an emergency vet.
+_Avoid_: Clinic, contractor
 
 **Document**:
 A file attached to a record: a quote, invoice, receipt, warranty, permit or photo. A newer document can supersede an older one without replacing it.

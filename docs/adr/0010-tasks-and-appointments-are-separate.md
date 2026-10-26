@@ -1,0 +1,3 @@
+# Tasks and appointments are separate records with no shared "Event"
+
+A furnace filter and a vet checkup both show up on the Home agenda, but they behave differently. A **task** repeats, often on a floating schedule, and gets marked done. An **appointment** happens once at a set time, maybe with a place or a contractor. Anything that repeats about an appointment, like booking an annual checkup, is a task. We considered one umbrella "Event" model with a kind column. It would have mixed nullable columns for both shapes, and "Event" collides with Laravel's own event system. The agenda is a view that merges tasks, appointments and commitment occurrences when it's read. It isn't a table.

@@ -13,6 +13,21 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    services:
+      pgsql:
+        image: postgres:18
+        env:
+          POSTGRES_DB: homey
+          POSTGRES_USER: homey
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,6 +48,11 @@ jobs:
 
       - name: Setup Application
         run: composer setup
+
+      - name: Create Testing Database
+        run: psql -h 127.0.0.1 -p 5434 -U homey -d homey -c 'CREATE DATABASE homey_testing'
+        env:
+          PGPASSWORD: secret
 
       - name: Run CI Checks
         run: composer ci:check

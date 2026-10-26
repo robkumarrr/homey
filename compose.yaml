@@ -1,0 +1,50 @@
+# Local development services only. Production runs on Laravel Cloud Postgres —
+# keep the major version here in step with it.
+services:
+    pgsql:
+        image: 'postgres:18'
+        restart: unless-stopped
+        ports:
+            - '127.0.0.1:${DB_PORT:-5434}:5432'
+        environment:
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - 'pgsql-data:/var/lib/postgresql'
+        configs:
+            - source: create-testing-database
+              target: /docker-entrypoint-initdb.d/10-create-testing-database.sql
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'pg_isready',
+                    '-q',
+                    '-d',
+                    '${DB_DATABASE}',
+                    '-U',
+                    '${DB_USERNAME}',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    # Catches all outgoing mail locally. Inbox at http://localhost:8026
+    mailpit:
+        image: 'axllent/mailpit:v1.27'
+        restart: unless-stopped
+        ports:
+            - '127.0.0.1:${MAIL_PORT:-1026}:1025'
+            - '127.0.0.1:8026:8025'
+
+volumes:
+    pgsql-data:
+
+# The test suite runs against its own database so it never wipes dev data.
+# Init scripts only run on a fresh volume; on an existing one, create it once:
+#   docker compose exec pgsql psql -U homey -d homey -c 'CREATE DATABASE homey_testing'
+configs:
+    create-testing-database:
+        content: |
+            CREATE DATABASE homey_testing;

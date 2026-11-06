@@ -87,13 +87,21 @@ _Avoid_: Deleted, inactive
 A one-off piece of work on a house, like replacing the eavestroughs. It is a project, not a task, when it involves a quote, a contract or more than one payment.
 _Avoid_: Renovation (as the general term), job
 
+**Contact**:
+A person or company that helps the family with its life and home, such as an insurance broker, a realtor, a plumber or a vet. Contacts belong to the family, can be starred as favourites, and each has one contact role. A bill can name its contact, and an expense can record who it was paid to.
+_Avoid_: Vendor, provider, address book entry
+
+**Contact role**:
+What a contact does for the family, such as Mortgage broker, Roofer or Vet. A family starts with a default set, which it can add to, rename and archive.
+_Avoid_: Trade, type, category
+
 **Contractor**:
-A person or company hired to work on a house.
+The contact hired for a project. It names the part a contact plays, not a separate record.
 _Avoid_: Vendor, tradesperson
 
 **Vet**:
-A veterinary clinic the family uses. Each pet has a primary vet and may have an emergency vet.
-_Avoid_: Clinic, contractor
+The contact a pet sees for care. Each pet has a primary vet and may have an emergency vet. It names the part a contact plays, not a separate record.
+_Avoid_: Clinic
 
 **Document**:
 A file attached to a record: a quote, invoice, receipt, warranty, permit or photo. A newer document can supersede an older one without replacing it.

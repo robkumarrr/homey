@@ -30,6 +30,10 @@ _Avoid_: Bill (for the template), subscription (as the general term), recurring 
 Money that actually left the household, on a specific date. The only record of real spending.
 _Avoid_: Transaction, payment, charge, purchase
 
+**Payment method**:
+A specific bank account or credit card the family pays from, such as "TD chequing" or "WS Visa Infinite+". Homey keeps a nickname, its kind and optionally the last four digits, never a balance or a full number. A commitment can name the one it comes out of, and an expense can record the one that paid it.
+_Avoid_: Account, card, funding source
+
 **Occurrence**:
 One date of a commitment or an income, such as "the October Netflix". A single occurrence can be moved, re-priced or skipped without changing the schedule. A commitment's occurrence is paid when an expense is recorded against it.
 _Avoid_: Instance, cycle

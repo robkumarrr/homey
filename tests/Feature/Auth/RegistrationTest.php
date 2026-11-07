@@ -40,7 +40,7 @@ test('registering creates a family owned by the new member, with a first house',
 
     expect($family->name)->toBe("Rob's family")
         ->and($family->membership->role)->toBe(FamilyRole::Owner)
-        ->and(asFamily($family, fn () => $family->houses()->pluck('name')->all()))->toBe(['Home']);
+        ->and(asFamily($family, fn () => $family->houses()->pluck('name')->all()))->toBe(['Our house']);
 });
 
 test('registration creates nothing when the family cannot be created', function () {

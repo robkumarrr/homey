@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     Hammer,
     House,
+    LayoutDashboard,
     ListChecks,
     Moon,
     PawPrint,
@@ -30,7 +31,7 @@ const { resolvedAppearance, updateAppearance } = useAppearance();
 const { isCurrentOrParentUrl } = useCurrentUrl();
 
 const navItems: NavItem[] = [
-    { title: 'Home', href: dashboard(), icon: House },
+    { title: 'Dashboard', href: dashboard(), icon: LayoutDashboard },
     { title: 'Finances', href: finances(), icon: Wallet },
     { title: 'Tasks', href: tasks(), icon: ListChecks },
     { title: 'Projects', href: projects(), icon: Hammer },

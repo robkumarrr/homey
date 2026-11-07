@@ -22,7 +22,7 @@ class CreateFamily
 
             $family->members()->attach($owner, ['role' => FamilyRole::Owner]);
 
-            $family->houses()->create(['name' => 'Home']);
+            $family->houses()->create(['name' => 'Our house']);
 
             return $family;
         });

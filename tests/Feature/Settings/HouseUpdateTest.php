@@ -14,7 +14,7 @@ test('house page shows the member\'s current house', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/House')
             ->where('house.id', $house->id)
-            ->where('house.name', 'Home'));
+            ->where('house.name', 'Our house'));
 });
 
 test('house name and address can be updated', function () {
@@ -52,7 +52,7 @@ test('updating a house leaves other families\' houses untouched', function () {
     $otherFamily = $otherUser->currentFamily();
     $otherHouse = asFamily($otherFamily, fn () => $otherFamily->houses()->sole());
 
-    expect($otherHouse->name)->toBe('Home');
+    expect($otherHouse->name)->toBe('Our house');
 });
 
 test('guests are redirected to the login page from house settings', function () {

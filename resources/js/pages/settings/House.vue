@@ -41,7 +41,7 @@ defineProps<{
                     name="name"
                     :default-value="house.name"
                     required
-                    placeholder="Home"
+                    placeholder="Our house"
                 />
                 <InputError class="mt-2" :message="errors.name" />
             </div>

@@ -13,7 +13,7 @@ const greeting =
 
 <template>
     <div class="space-y-6">
-        <Head title="Home" />
+        <Head title="Dashboard" />
 
         <header class="space-y-1">
             <p v-if="page.props.house" class="text-sm text-muted-foreground">

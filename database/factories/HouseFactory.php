@@ -20,7 +20,7 @@ class HouseFactory extends Factory
     {
         return [
             'family_id' => Family::factory(),
-            'name' => fake()->randomElement(['Home', 'Cottage', 'Main house']),
+            'name' => fake()->randomElement(['Our house', 'Cottage', 'Main house']),
             'address' => fake()->streetAddress(),
         ];
     }

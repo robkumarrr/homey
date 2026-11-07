@@ -54,6 +54,10 @@ _Avoid_: Utility account
 Money the household expects to earn, on a schedule like pay or once like a bonus, optionally tied to the member who earns it (the earner). Only expected income is tracked: actual deposits and bank balances are not recorded.
 _Avoid_: Revenue, earnings, balance
 
+**Budget period**:
+A calendar month. Budgets are set per period, but spending can be totalled over any date range.
+_Avoid_: Cycle, pay period
+
 **Budget allocation**:
 The amount a family plans to spend in one category over one budget period.
 _Avoid_: Budget line, envelope, limit
@@ -76,7 +80,7 @@ A single date and time to be somewhere or meet someone, for a house, a pet or a 
 _Avoid_: Event, booking, visit
 
 **Agenda**:
-The Home screen's list of what needs attention soon: due tasks, appointments and occurrences together.
+The Dashboard's list of what needs attention soon: due tasks, appointments and occurrences together.
 _Avoid_: Event, feed, timeline
 
 **Anchored schedule**:

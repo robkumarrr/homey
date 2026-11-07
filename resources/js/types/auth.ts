@@ -10,6 +10,11 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type House = {
+    id: number;
+    name: string;
+};
+
 export type Auth = {
     user: User;
 };

@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -33,6 +34,26 @@ class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    /**
+     * @return BelongsToMany<Family, $this, Membership, 'membership'>
+     */
+    public function families(): BelongsToMany
+    {
+        return $this->belongsToMany(Family::class)
+            ->using(Membership::class)
+            ->as('membership')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * The family this member works in. Each member belongs to one family for now.
+     */
+    public function currentFamily(): ?Family
+    {
+        return $this->families()->oldest('family_user.id')->first();
+    }
 
     /**
      * Get the attributes that should be cast.

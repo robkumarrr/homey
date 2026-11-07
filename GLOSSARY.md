@@ -23,8 +23,12 @@ _Avoid_: Invite code, family code
 ## Money
 
 **Commitment**:
-A recurring promise to pay: a subscription, bill, loan or insurance premium, with an expected amount and schedule. It records what is owed, never what was paid.
-_Avoid_: Bill (for the template), subscription (as the general term), recurring expense
+A recurring promise to pay: a subscription, bill, loan or insurance premium, with an expected amount and schedule. It records what is owed, never what was paid. The app calls it a Bill; "commitment" is the name in code.
+_Avoid_: Subscription (as the general term), recurring expense
+
+**Autopay**:
+A setting on a fixed-amount commitment, like the mortgage or Netflix: on each due date Homey records the expense itself, with the expected amount, payment method and contact. Variable bills, like hydro, still ask how much was paid.
+_Avoid_: Auto-debit, automatic payment
 
 **Expense**:
 Money that actually left the household, on a specific date. The only record of real spending.

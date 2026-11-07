@@ -23,28 +23,36 @@ _Avoid_: Invite code, family code
 ## Money
 
 **Commitment**:
-A recurring promise to pay: a subscription, bill, loan or insurance premium, with an expected amount and schedule. It records what is owed, never what was paid. The app calls it a Bill; "commitment" is the name in code.
+A promise to pay on a schedule, usually recurring: a subscription, bill, loan or insurance premium, with an expected amount. It records what is owed, never what was paid. The app calls it a Bill; "commitment" is the name in code.
 _Avoid_: Subscription (as the general term), recurring expense
 
+**Occurrence**:
+One date of a commitment or an income, such as "the October Netflix". A single occurrence can be moved, re-priced or skipped without changing the schedule. A commitment's occurrence is paid when an expense is recorded against it.
+_Avoid_: Instance, cycle
+
 **Autopay**:
-A setting on a fixed-amount commitment, like the mortgage or Netflix: on each due date Homey records the expense itself, with the expected amount, payment method and contact. Variable bills, like hydro, still ask how much was paid.
+A setting on a fixed-amount commitment, like the mortgage or Netflix. On each due date Homey records the expense itself, using that occurrence's amount and the commitment's payment method and contact. Variable bills, like hydro, still ask how much was paid.
 _Avoid_: Auto-debit, automatic payment
 
 **Expense**:
-Money that actually left the household, on a specific date. The only record of real spending.
+Money that actually left the household, on a specific date. The only record of real spending. It can record the payment method that paid it and the contact it was paid to.
 _Avoid_: Transaction, payment, charge, purchase
 
 **Payment method**:
 A specific bank account or credit card the family pays from, such as "TD chequing" or "WS Visa Infinite+". Homey keeps a nickname, its kind and optionally the last four digits, never a balance or a full number. A commitment can name the one it comes out of, and an expense can record the one that paid it.
 _Avoid_: Account, card, funding source
 
-**Occurrence**:
-One date of a commitment or an income, such as "the October Netflix". A single occurrence can be moved, re-priced or skipped without changing the schedule. A commitment's occurrence is paid when an expense is recorded against it.
-_Avoid_: Instance, cycle
-
 **Category**:
 A family's label for grouping spending, such as Groceries or Utilities. Every expense has exactly one.
 _Avoid_: Tag, type, bucket
+
+**Utility**:
+A metered service for a house, like hydro, gas or water, paid through a commitment whose amount varies. Each payment records the service period and, when the `utility-usage` flag is on, how much was used.
+_Avoid_: Utility account
+
+**Income**:
+Money the household expects to earn, on a schedule like pay or once like a bonus, optionally tied to the member who earns it (the earner). Only expected income is tracked: actual deposits and bank balances are not recorded.
+_Avoid_: Revenue, earnings, balance
 
 **Budget allocation**:
 The amount a family plans to spend in one category over one budget period.
@@ -53,18 +61,18 @@ _Avoid_: Budget line, envelope, limit
 **Cash basis**:
 Spending counts in the month it was paid, not the month it was due.
 
-**Income**:
-Money the household expects to earn, on a schedule like pay or once like a bonus, optionally tied to the member who earns it (the earner). Homey tracks income and spending, not what is held in bank accounts.
-_Avoid_: Revenue, earnings, balance
-
 ## Scheduling
 
 **Task**:
 A job to get done for a house or a pet, like draining the hot water tank or giving flea medication. Anything that repeats is a task, including "book Rosie's checkup".
 _Avoid_: Event, maintenance item, upkeep, to-do
 
+**Checklist**:
+The ordered steps for doing a task, like turning off the gas before draining the tank. Steps are ticked off fresh each time the task is done; the history records only that it was done.
+_Avoid_: Subtasks, steps list
+
 **Appointment**:
-A single date and time to be somewhere or meet someone, for a house, a pet or a project, like Rosie's checkup or a contractor's site visit. Appointments never repeat.
+A single date and time to be somewhere or meet someone, for a house, a pet or a project, optionally with a contact, like Rosie's checkup or a contractor's site visit. Appointments never repeat.
 _Avoid_: Event, booking, visit
 
 **Agenda**:
@@ -74,12 +82,8 @@ _Avoid_: Event, feed, timeline
 **Anchored schedule**:
 Repeats on fixed calendar dates regardless of when it was last done, like a bill due on the 5th.
 
-**Checklist**:
-The ordered steps for doing a task, like turning off the gas before draining the tank. Steps are ticked off fresh each time the task is done; the history records only that it was done.
-_Avoid_: Subtasks, steps list
-
 **Floating schedule**:
-Repeats a set interval after it was last completed, like a furnace filter every three months.
+Repeats a set interval after it was last done or paid, like a furnace filter every three months.
 
 ## Records
 
@@ -91,8 +95,22 @@ _Avoid_: Deleted, inactive
 A one-off piece of work on a house, like replacing the eavestroughs. It is a project, not a task, when it involves a quote, a contract or more than one payment.
 _Avoid_: Renovation (as the general term), job
 
+**Quote**:
+A contact's price for a project. Accepting one sets the project's contract amount and contractor; the others stay on record.
+_Avoid_: Estimate, bid
+
+**Pet**:
+An animal the family cares for. Pets belong to the family and can have tasks, appointments, expenses, documents and vets.
+_Avoid_: Animal
+
+**Document**:
+A file attached to a record: a quote, invoice, receipt, warranty, permit or photo. A newer document can supersede an older one without replacing it.
+_Avoid_: Attachment (in UI copy), file
+
+## Contacts
+
 **Contact**:
-A person or company that helps the family with its life and home, such as an insurance broker, a realtor, a plumber or a vet. Contacts belong to the family, can be starred as favourites, and each has one contact role. A bill can name its contact, and an expense can record who it was paid to.
+A person or company that helps the family with its life and home, such as an insurance broker, a realtor, a plumber or a vet. Contacts belong to the family, can be starred as favourites, and each has one contact role. A commitment can name its contact, and an expense can record who it was paid to.
 _Avoid_: Vendor, provider, address book entry
 
 **Contact role**:
@@ -106,7 +124,3 @@ _Avoid_: Vendor, tradesperson
 **Vet**:
 The contact a pet sees for care. Each pet has a primary vet and may have an emergency vet. It names the part a contact plays, not a separate record.
 _Avoid_: Clinic
-
-**Document**:
-A file attached to a record: a quote, invoice, receipt, warranty, permit or photo. A newer document can supersede an older one without replacing it.
-_Avoid_: Attachment (in UI copy), file

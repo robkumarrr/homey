@@ -4,4 +4,4 @@ An expense can point at a commitment's occurrence, a project or a pet, and docum
 
 ## Consequences
 
-A CHECK constraint allows at most one subject per expense, and a test inserts through raw SQL to prove the constraint still holds after every migration.
+A CHECK constraint allows at most one subject per expense (commitment, project or pet). An expense's payment method and "paid to" contact describe how it was paid, not what it was for, so they sit outside that constraint. A test inserts through raw SQL to prove the constraint still holds after every migration.

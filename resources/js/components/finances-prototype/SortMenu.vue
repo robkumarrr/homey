@@ -16,7 +16,10 @@ import type { Direction, SortKey } from './store';
 
 const sortKey = defineModel<SortKey>('sortKey', { required: true });
 const direction = defineModel<Direction>('direction', { required: true });
-const props = defineProps<{ dateDirection: Direction }>();
+const props = defineProps<{
+    dateDirection: Direction;
+    triggerClass?: string;
+}>();
 
 const labels: Record<SortKey, string> = {
     date: 'Date',
@@ -46,7 +49,10 @@ function pick(key: SortKey): void {
         <DropdownMenuTrigger as-child>
             <button
                 type="button"
-                class="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                :class="
+                    triggerClass ??
+                    'flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground'
+                "
                 :aria-label="`Sorted by ${labels[sortKey]}, ${direction === 'asc' ? 'ascending' : 'descending'}`"
             >
                 {{ labels[sortKey] }}

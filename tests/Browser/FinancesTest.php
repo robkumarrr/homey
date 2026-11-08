@@ -27,6 +27,9 @@ test('a member can add an expense and then edit it', function () {
         ->assertSee('$42.50')
         ->assertDontSee('Loblaws')
         ->assertNoJavaScriptErrors();
+
+    $this->assertDatabaseCount('expenses', 1);
+    $this->assertDatabaseHas('expenses', ['name' => 'Costco', 'amount_cents' => 4250]);
 });
 
 test('mistakes are shown on the field that needs fixing', function () {
@@ -36,7 +39,10 @@ test('mistakes are shown on the field that needs fixing', function () {
         ->fill('amount', 'abc')
         ->click('@save-expense')
         ->assertSee('Enter an amount like 19.99 or $1,200.')
-        ->assertSee('Nothing spent this month yet');
+        ->assertSee('Nothing spent this month yet')
+        ->assertNoJavaScriptErrors();
+
+    $this->assertDatabaseCount('expenses', 0);
 });
 
 test('every tab loads without errors, on desktop and on a phone', function () {

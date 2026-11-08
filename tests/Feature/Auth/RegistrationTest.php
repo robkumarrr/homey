@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\CreateDefaultCategories;
 use App\Actions\CreateFamily;
 use App\Enums\FamilyRole;
 use App\Models\User;
@@ -41,6 +42,20 @@ test('registering creates a family owned by the new member, with a first house',
     expect($family->name)->toBe("Rob's family")
         ->and($family->membership->role)->toBe(FamilyRole::Owner)
         ->and(asFamily($family, fn () => $family->houses()->pluck('name')->all()))->toBe(['Our house']);
+});
+
+test('a new family starts with its own copy of the default categories', function () {
+    $this->post(route('register.store'), [
+        'name' => 'Rob Kumar',
+        'email' => 'rob@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $family = User::where('email', 'rob@example.com')->sole()->families()->sole();
+
+    expect(asFamily($family, fn () => $family->categories()->orderBy('position')->pluck('name')->all()))
+        ->toBe(array_column(CreateDefaultCategories::DEFAULTS, 0));
 });
 
 test('registration creates nothing when the family cannot be created', function () {

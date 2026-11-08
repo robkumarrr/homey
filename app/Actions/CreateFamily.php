@@ -10,8 +10,11 @@ use Illuminate\Support\Str;
 
 class CreateFamily
 {
+    public function __construct(private CreateDefaultCategories $createDefaultCategories) {}
+
     /**
-     * Create a family owned by the given member, with its first house.
+     * Create a family owned by the given member, with its first house and
+     * the default categories.
      */
     public function handle(User $owner): Family
     {
@@ -23,6 +26,8 @@ class CreateFamily
             $family->members()->attach($owner, ['role' => FamilyRole::Owner]);
 
             $family->houses()->create(['name' => 'Our house']);
+
+            $this->createDefaultCategories->handle($family);
 
             return $family;
         });

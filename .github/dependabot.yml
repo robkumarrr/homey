@@ -10,3 +10,28 @@ updates:
       github-actions:
         patterns:
           - "*"
+
+  # Composer and npm: security updates only. A limit of 0 turns off routine
+  # version bumps; Dependabot still opens security PRs (once security updates
+  # are enabled in the repo settings), grouped into one PR per ecosystem.
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+    groups:
+      composer-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+    groups:
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"

@@ -4,7 +4,8 @@
  * (Pay button, Paid and Skipped pills, all the same size), the three total
  * tiles back as separate cards, rows split onto three compact lines (name;
  * status or date with the contractor; payment method), list header controls
- * styled as buttons, and a count on Recurring.
+ * styled as buttons, a count on Recurring, and the same always-visible ⋯
+ * menu on expenses (Edit, Delete…) as on bills.
  */
 import {
     Check,
@@ -354,7 +355,7 @@ const headerButton =
                         <!-- One fixed-size status slot: Pay button, or a Paid / Skipped pill. -->
                         <span
                             v-if="occurrence.status === 'paid'"
-                            class="flex h-7 w-17 shrink-0 items-center justify-center gap-1 rounded-md bg-(--meter-ok-track) text-xs font-medium text-(--meter-ok)"
+                            class="flex h-7 w-17 shrink-0 items-center justify-center gap-1 rounded-md bg-green-100 text-xs font-semibold text-green-600 dark:bg-green-950 dark:text-green-400"
                         >
                             <Check class="size-3.5" /> Paid
                         </span>
@@ -449,7 +450,7 @@ const headerButton =
                     <li
                         v-for="expense in expenses"
                         :key="expense.id"
-                        class="group flex items-center gap-3 px-4 py-2"
+                        class="flex items-center gap-3 px-4 py-2"
                     >
                         <CategoryBadge :category-id="expense.categoryId" />
                         <div class="min-w-0 flex-1">
@@ -476,26 +477,28 @@ const headerButton =
                         <span class="shrink-0 text-sm tabular-nums">
                             {{ money(expense.amountCents) }}
                         </span>
-                        <div
-                            class="flex shrink-0 md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100"
-                        >
-                            <button
-                                type="button"
-                                class="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                                aria-label="Edit expense"
-                                @click="openEdit(expense)"
-                            >
-                                <Pencil class="size-4" />
-                            </button>
-                            <button
-                                type="button"
-                                class="-mr-1 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-destructive"
-                                aria-label="Delete expense"
-                                @click="confirmingDelete = expense"
-                            >
-                                <Trash2 class="size-4" />
-                            </button>
-                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="-mr-1 shrink-0 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                                    :aria-label="`More for ${expense.note || categoryName(expense.categoryId)}`"
+                                >
+                                    <Ellipsis class="size-4" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem @select="openEdit(expense)">
+                                    <Pencil /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    @select="confirmingDelete = expense"
+                                >
+                                    <Trash2 /> Delete…
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </li>
                 </ul>
             </section>

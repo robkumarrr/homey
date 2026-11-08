@@ -15,6 +15,7 @@ import {
     bills,
     byCategory,
     categoryName,
+    contactLabel,
     daysBetween,
     deleteExpense,
     lastPaidCents,
@@ -363,8 +364,8 @@ const showAllBills = ref(false);
                             {{ repeatLabels[bill.everyMonths] }} ·
                             {{ categoryName(bill.categoryId) }} ·
                             {{ paymentMethodName(bill.paymentMethodId) }}
-                            <template v-if="bill.contact">
-                                · {{ bill.contact }}
+                            <template v-if="contactLabel(bill.contactId)">
+                                · {{ contactLabel(bill.contactId) }}
                             </template>
                         </p>
                     </div>

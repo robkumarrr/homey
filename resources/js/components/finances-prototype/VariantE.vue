@@ -1,85 +1,81 @@
 <script setup lang="ts">
 /**
- * PROTOTYPE variant E — "Calendar": the Ledger v2 header and totals over a
- * month grid. Bills and project payments sit on their due dates; everyday
- * spending shows as a per-day total. Pick a day to act on it below the grid.
- * Hand-rolled for the prototype; the real one would likely use Schedule-X.
+ * PROTOTYPE variant E — "Ledger v3": D plus feedback. The month switcher sits
+ * on the right with "This month" to its left, every row carries its
+ * category's icon and colour, contacts are picked from a dropdown (with
+ * "New contact…"), and the Add dialog keeps one size with a sliding switch.
  */
-import { Check, Hammer, Plus, Repeat, Trash2 } from '@lucide/vue';
-import { computed, ref, watch } from 'vue';
+import { Check, Plus, Repeat, Trash2 } from '@lucide/vue';
+import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
-import { compactMoney, formatDay, money } from './format';
+import CategoryBadge from './CategoryBadge.vue';
+import { formatDay, money } from './format';
 import MonthSwitcher from './MonthSwitcher.vue';
 import {
-    billFor,
+    contactLabel,
+    contacts,
+    bills,
+    byCategory,
     categoryName,
+    daysBetween,
     deleteExpense,
-    iso,
+    lastPaidCents,
     monthExpenses,
     monthOccurrences,
     openAdd,
     paying,
     paymentMethodName,
-    selectedMonth,
+    repeatLabels,
+    state,
     today,
     toggleSkip,
     totals,
 } from './store';
+import type { Occurrence } from './store';
 
-const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function dueText(occurrence: Occurrence): string {
+    if (occurrence.status === 'paid') {
+        return `Paid ${formatDay(occurrence.expense!.paidOn)} · ${paymentMethodName(occurrence.expense!.paymentMethodId)}`;
+    }
 
-const cells = computed(() => {
-    const start = selectedMonth.value;
-    const leading = start.getDay();
-    const daysInMonth = new Date(
-        start.getFullYear(),
-        start.getMonth() + 1,
-        0,
-    ).getDate();
+    if (occurrence.status === 'skipped') {
+        return 'Skipped this month';
+    }
 
-    return [
-        ...Array.from({ length: leading }, () => null),
-        ...Array.from({ length: daysInMonth }, (_, i) => {
-            const date = iso(
-                new Date(start.getFullYear(), start.getMonth(), i + 1),
-            );
-            const occurrences = monthOccurrences.value.filter(
-                (o) => o.dueOn === date,
-            );
-            const spent = monthExpenses.value
-                .filter((e) => e.paidOn === date && e.billId === null)
-                .reduce((sum, e) => sum + e.amountCents, 0);
+    const days = daysBetween(today, occurrence.dueOn);
 
-            return { date, day: i + 1, occurrences, spent };
-        }),
-    ];
+    if (days < 0) {
+        return `${-days} day${days === -1 ? '' : 's'} overdue`;
+    }
+
+    return days === 0 ? 'Due today' : `Due ${formatDay(occurrence.dueOn)}`;
+}
+
+const recurringBills = computed(() =>
+    bills
+        .filter((bill) => !bill.project)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+);
+
+const project = computed(() => {
+    const payments = bills.filter((bill) => bill.project);
+    const paid = payments.filter((bill) =>
+        state.expenses.some((e) => e.billId === bill.id),
+    );
+    const next = payments.find((bill) => !paid.includes(bill));
+
+    return {
+        ...payments[0].project!,
+        contractCents: payments.reduce((sum, b) => sum + b.amountCents, 0),
+        paidCents: paid.reduce((sum, b) => sum + b.amountCents, 0),
+        next,
+    };
 });
 
-const selected = ref(today);
+const showAllBills = ref(false);
 
-watch(
-    selectedMonth,
-    (start) => {
-        const prefix = iso(start).slice(0, 7);
-        selected.value = today.startsWith(prefix) ? today : `${prefix}-01`;
-    },
-    { immediate: true },
-);
-
-const dayOccurrences = computed(() =>
-    monthOccurrences.value.filter((o) => o.dueOn === selected.value),
-);
-const dayExpenses = computed(() =>
-    monthExpenses.value.filter((e) => e.paidOn === selected.value),
-);
-
-const chipClass = (status: string): string =>
-    ({
-        paid: 'bg-(--meter-ok-track) text-foreground',
-        overdue: 'bg-destructive/15 text-destructive font-medium',
-        skipped: 'bg-muted text-muted-foreground line-through',
-        due: 'border border-primary/40 text-foreground',
-    })[status] ?? '';
+const contactName = (id?: string | null): string | undefined =>
+    contacts.find((contact) => contact.id === id)?.name;
 </script>
 
 <template>
@@ -91,7 +87,9 @@ const chipClass = (status: string): string =>
                 </h1>
                 <Button @click="openAdd('expense')"> <Plus /> Add </Button>
             </div>
-            <MonthSwitcher class="-ml-2.5" />
+            <div class="flex justify-end">
+                <MonthSwitcher class="-mr-1.5" />
+            </div>
         </div>
 
         <section class="grid grid-cols-3 gap-3">
@@ -115,193 +113,284 @@ const chipClass = (status: string): string =>
             </div>
         </section>
 
-        <section class="overflow-hidden rounded-2xl border bg-card">
-            <div
-                class="grid grid-cols-7 border-b text-center text-xs text-muted-foreground"
-            >
-                <div v-for="weekday in weekdays" :key="weekday" class="py-2">
-                    {{ weekday }}
-                </div>
-            </div>
-            <div class="grid grid-cols-7">
-                <template v-for="(cell, index) in cells" :key="index">
-                    <div v-if="!cell" class="border-r border-b bg-muted/30" />
+        <div class="grid gap-6 md:grid-cols-2">
+            <section class="rounded-2xl border bg-card">
+                <div
+                    class="flex items-center justify-between border-b px-4 py-3"
+                >
+                    <h2 class="text-sm font-semibold">Due this month</h2>
                     <button
-                        v-else
                         type="button"
-                        class="flex min-h-16 flex-col items-stretch gap-1 border-r border-b p-1 text-left hover:bg-accent/50 md:min-h-28 md:p-1.5"
-                        :class="
-                            cell.date === selected &&
-                            'bg-accent ring-2 ring-primary ring-inset'
-                        "
-                        :aria-pressed="cell.date === selected"
-                        :aria-label="formatDay(cell.date)"
-                        @click="selected = cell.date"
+                        class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                        @click="openAdd('bill')"
                     >
-                        <span
-                            class="flex size-6 items-center justify-center rounded-full text-xs"
-                            :class="
-                                cell.date === today
-                                    ? 'bg-primary font-semibold text-primary-foreground'
-                                    : 'text-muted-foreground'
-                            "
-                        >
-                            {{ cell.day }}
-                        </span>
-
-                        <!-- Phones: dots. Larger screens: chips. -->
-                        <span class="flex flex-wrap gap-0.5 md:hidden">
-                            <span
-                                v-for="occurrence in cell.occurrences"
-                                :key="occurrence.key"
-                                class="size-1.5 rounded-full"
-                                :class="{
-                                    'bg-(--meter-ok)':
-                                        occurrence.status === 'paid',
-                                    'bg-destructive':
-                                        occurrence.status === 'overdue',
-                                    'bg-primary': occurrence.status === 'due',
-                                    'bg-muted-foreground/40':
-                                        occurrence.status === 'skipped',
-                                }"
-                            />
-                        </span>
-                        <span
-                            v-for="occurrence in cell.occurrences.slice(0, 3)"
-                            :key="occurrence.key"
-                            class="hidden truncate rounded px-1 py-0.5 text-[11px] md:block"
-                            :class="chipClass(occurrence.status)"
-                        >
-                            {{ occurrence.bill.name }}
-                            {{ compactMoney(occurrence.amountCents) }}
-                        </span>
-                        <span
-                            v-if="cell.occurrences.length > 3"
-                            class="hidden text-[11px] text-muted-foreground md:block"
-                        >
-                            +{{ cell.occurrences.length - 3 }} more
-                        </span>
-                        <span
-                            v-if="cell.spent"
-                            class="mt-auto text-[10px] text-muted-foreground tabular-nums md:text-[11px]"
-                        >
-                            {{ compactMoney(cell.spent)
-                            }}<span class="hidden md:inline"> spent</span>
-                        </span>
+                        <Plus class="size-3.5" /> Bill
                     </button>
-                </template>
+                </div>
+                <p
+                    v-if="monthOccurrences.length === 0"
+                    class="px-4 py-8 text-center text-sm text-muted-foreground"
+                >
+                    No bills due this month.
+                </p>
+                <ul class="divide-y">
+                    <li
+                        v-for="occurrence in monthOccurrences"
+                        :key="occurrence.key"
+                        class="flex items-center gap-3 px-4 py-3"
+                        :class="occurrence.status === 'skipped' && 'opacity-50'"
+                    >
+                        <CategoryBadge
+                            :category-id="occurrence.bill.categoryId"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="flex items-center gap-1.5 text-sm font-medium"
+                            >
+                                <span
+                                    class="truncate"
+                                    :class="
+                                        occurrence.status === 'skipped' &&
+                                        'line-through'
+                                    "
+                                    >{{ occurrence.bill.name }}</span
+                                >
+                                <Repeat
+                                    v-if="occurrence.bill.autopay"
+                                    class="size-3.5 shrink-0 text-muted-foreground"
+                                    aria-label="Autopay"
+                                />
+                            </p>
+                            <p
+                                class="text-xs"
+                                :class="
+                                    occurrence.status === 'overdue'
+                                        ? 'font-medium text-destructive'
+                                        : 'text-muted-foreground'
+                                "
+                            >
+                                {{ dueText(occurrence) }}
+                                <template v-if="occurrence.bill.project">
+                                    · {{ occurrence.bill.project.contractor }}
+                                </template>
+                            </p>
+                        </div>
+                        <span class="text-sm tabular-nums">
+                            <span
+                                v-if="
+                                    occurrence.bill.variable &&
+                                    occurrence.status !== 'paid'
+                                "
+                                class="text-muted-foreground"
+                                >~</span
+                            >{{ money(occurrence.amountCents) }}
+                        </span>
+                        <Check
+                            v-if="occurrence.status === 'paid'"
+                            class="size-4 text-(--meter-ok)"
+                            aria-label="Paid"
+                        />
+                        <template v-else>
+                            <Button
+                                v-if="occurrence.status !== 'skipped'"
+                                size="sm"
+                                variant="outline"
+                                @click="paying = occurrence"
+                            >
+                                Paid
+                            </Button>
+                            <button
+                                type="button"
+                                class="text-xs text-muted-foreground hover:text-foreground"
+                                @click="toggleSkip(occurrence)"
+                            >
+                                {{
+                                    occurrence.status === 'skipped'
+                                        ? 'Undo'
+                                        : 'Skip'
+                                }}
+                            </button>
+                        </template>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="rounded-2xl border bg-card">
+                <div
+                    class="flex items-center justify-between border-b px-4 py-3"
+                >
+                    <h2 class="text-sm font-semibold">
+                        Expenses
+                        <span class="font-normal text-muted-foreground">
+                            · {{ monthExpenses.length }}
+                        </span>
+                    </h2>
+                    <button
+                        type="button"
+                        class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                        @click="openAdd('expense')"
+                    >
+                        <Plus class="size-3.5" /> Expense
+                    </button>
+                </div>
+                <p
+                    v-if="monthExpenses.length === 0"
+                    class="px-4 py-8 text-center text-sm text-muted-foreground"
+                >
+                    Nothing spent this month.
+                </p>
+                <ul class="max-h-[32rem] divide-y overflow-y-auto">
+                    <li
+                        v-for="expense in monthExpenses"
+                        :key="expense.id"
+                        class="group flex items-center gap-3 px-4 py-2.5"
+                    >
+                        <CategoryBadge :category-id="expense.categoryId" />
+                        <div class="min-w-0 flex-1">
+                            <p class="flex items-center gap-1.5 text-sm">
+                                <span class="truncate">
+                                    {{
+                                        expense.note ||
+                                        categoryName(expense.categoryId)
+                                    }}
+                                </span>
+                            </p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ formatDay(expense.paidOn) }} ·
+                                {{ categoryName(expense.categoryId) }} ·
+                                {{ paymentMethodName(expense.paymentMethodId) }}
+                                <template v-if="contactName(expense.paidToId)">
+                                    · to {{ contactName(expense.paidToId) }}
+                                </template>
+                            </p>
+                        </div>
+                        <span class="text-sm tabular-nums">
+                            {{ money(expense.amountCents) }}
+                        </span>
+                        <button
+                            type="button"
+                            class="text-muted-foreground hover:text-destructive focus:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                            aria-label="Delete expense"
+                            @click="deleteExpense(expense)"
+                        >
+                            <Trash2 class="size-4" />
+                        </button>
+                    </li>
+                </ul>
+            </section>
+        </div>
+
+        <section
+            class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border bg-card px-4 py-3"
+        >
+            <CategoryBadge category-id="home" />
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium">{{ project.name }}</p>
+                <p class="text-xs text-muted-foreground">
+                    {{ project.contractor }} · {{ money(project.paidCents) }} of
+                    {{ money(project.contractCents) }} paid
+                    <template v-if="project.next">
+                        · next: {{ money(project.next.amountCents) }} on
+                        {{ formatDay(project.next.firstDueOn) }}
+                    </template>
+                </p>
             </div>
+            <span class="text-xs text-muted-foreground">
+                Project payments show up here and in Projects (#6)
+            </span>
         </section>
 
         <section class="rounded-2xl border bg-card">
-            <div class="flex items-center justify-between border-b px-4 py-3">
-                <h2 class="text-sm font-semibold">{{ formatDay(selected) }}</h2>
-                <span class="text-xs text-muted-foreground">
-                    Bills on their due date · spending on the day it was paid
-                </span>
-            </div>
-            <p
-                v-if="dayOccurrences.length === 0 && dayExpenses.length === 0"
-                class="px-4 py-6 text-center text-sm text-muted-foreground"
-            >
-                Nothing on this day.
-            </p>
-            <ul class="divide-y">
-                <li
-                    v-for="occurrence in dayOccurrences"
-                    :key="occurrence.key"
-                    class="flex items-center gap-3 px-4 py-3"
-                >
-                    <Hammer
-                        v-if="occurrence.bill.project"
-                        class="size-4 shrink-0 text-muted-foreground"
-                    />
-                    <div class="min-w-0 flex-1">
-                        <p
-                            class="flex items-center gap-1.5 text-sm font-medium"
-                        >
-                            <span
-                                :class="
-                                    occurrence.status === 'skipped' &&
-                                    'line-through opacity-50'
-                                "
-                            >
-                                {{ occurrence.bill.name }}
+            <h2 class="border-b px-4 py-3 text-sm font-semibold">
+                By category
+            </h2>
+            <table class="w-full text-sm">
+                <thead class="text-xs text-muted-foreground">
+                    <tr>
+                        <th class="px-4 py-2 text-left font-normal">
+                            Category
+                        </th>
+                        <th class="px-4 py-2 text-right font-normal">Spent</th>
+                        <th class="px-4 py-2 text-right font-normal">
+                            Still due
+                        </th>
+                        <th class="px-4 py-2 text-right font-normal">
+                            Projected
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y tabular-nums">
+                    <tr v-for="row in byCategory" :key="row.id">
+                        <td class="px-4 py-2">
+                            <span class="flex items-center gap-2">
+                                <CategoryBadge
+                                    :category-id="row.id"
+                                    size="sm"
+                                />
+                                {{ row.name }}
                             </span>
+                        </td>
+                        <td class="px-4 py-2 text-right">
+                            {{ money(row.spent) }}
+                        </td>
+                        <td class="px-4 py-2 text-right text-muted-foreground">
+                            {{ row.due ? money(row.due) : '—' }}
+                        </td>
+                        <td class="px-4 py-2 text-right font-medium">
+                            {{ money(row.spent + row.due) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="rounded-2xl border bg-card">
+            <button
+                type="button"
+                class="flex w-full items-center justify-between px-4 py-3 text-sm font-semibold"
+                :aria-expanded="showAllBills"
+                @click="showAllBills = !showAllBills"
+            >
+                All bills · {{ recurringBills.length }}
+                <span class="text-xs font-normal text-muted-foreground">
+                    {{ showAllBills ? 'Hide' : 'Show' }}
+                </span>
+            </button>
+            <ul v-if="showAllBills" class="divide-y border-t">
+                <li
+                    v-for="bill in recurringBills"
+                    :key="bill.id"
+                    class="flex items-center gap-3 px-4 py-2.5"
+                >
+                    <CategoryBadge :category-id="bill.categoryId" />
+                    <div class="min-w-0 flex-1">
+                        <p class="flex items-center gap-1.5 text-sm">
+                            {{ bill.name }}
                             <Repeat
-                                v-if="occurrence.bill.autopay"
+                                v-if="bill.autopay"
                                 class="size-3.5 text-muted-foreground"
                                 aria-label="Autopay"
                             />
                         </p>
-                        <p class="text-xs text-muted-foreground capitalize">
-                            {{ occurrence.status }}
-                            <template v-if="occurrence.bill.project">
-                                · {{ occurrence.bill.project.contractor }}
+                        <p class="text-xs text-muted-foreground">
+                            {{ repeatLabels[bill.everyMonths] }} ·
+                            {{ categoryName(bill.categoryId) }} ·
+                            {{ paymentMethodName(bill.paymentMethodId) }}
+                            <template v-if="contactLabel(bill.contactId)">
+                                · {{ contactLabel(bill.contactId) }}
                             </template>
                         </p>
                     </div>
-                    <span class="text-sm tabular-nums">{{
-                        money(occurrence.amountCents)
-                    }}</span>
-                    <Check
-                        v-if="occurrence.status === 'paid'"
-                        class="size-4 text-(--meter-ok)"
-                        aria-label="Paid"
-                    />
-                    <template v-else>
-                        <Button
-                            v-if="occurrence.status !== 'skipped'"
-                            size="sm"
-                            variant="outline"
-                            @click="paying = occurrence"
-                        >
-                            Paid
-                        </Button>
-                        <button
-                            type="button"
-                            class="text-xs text-muted-foreground hover:text-foreground"
-                            @click="toggleSkip(occurrence)"
-                        >
-                            {{
-                                occurrence.status === 'skipped'
-                                    ? 'Undo'
-                                    : 'Skip'
-                            }}
-                        </button>
-                    </template>
-                </li>
-                <li
-                    v-for="expense in dayExpenses"
-                    :key="expense.id"
-                    class="flex items-center gap-3 px-4 py-2.5"
-                >
-                    <Hammer
-                        v-if="billFor(expense)?.project"
-                        class="size-4 shrink-0 text-muted-foreground"
-                    />
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm">
-                            {{
-                                expense.note || categoryName(expense.categoryId)
-                            }}
-                        </p>
-                        <p class="text-xs text-muted-foreground">
-                            {{ categoryName(expense.categoryId) }} ·
-                            {{ paymentMethodName(expense.paymentMethodId) }}
-                        </p>
-                    </div>
-                    <span class="text-sm tabular-nums">{{
-                        money(expense.amountCents)
-                    }}</span>
-                    <button
-                        type="button"
-                        class="text-muted-foreground hover:text-destructive"
-                        aria-label="Delete expense"
-                        @click="deleteExpense(expense)"
-                    >
-                        <Trash2 class="size-4" />
-                    </button>
+                    <span class="text-sm tabular-nums">
+                        {{ bill.variable ? '~' : ''
+                        }}{{
+                            money(
+                                bill.variable
+                                    ? lastPaidCents(bill)
+                                    : bill.amountCents,
+                            )
+                        }}
+                    </span>
                 </li>
             </ul>
         </section>

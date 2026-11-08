@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ContactSelect from './ContactSelect.vue';
 import { formatDay, parseCents } from './format';
 import {
     addBill,
@@ -78,6 +79,7 @@ const blankExpense = () => ({
     categoryId: 'groceries',
     note: '',
     paymentMethodId: '',
+    paidToId: '',
 });
 const expense = ref(blankExpense());
 
@@ -91,7 +93,7 @@ const blankBill = () => ({
     firstDueOn: today,
     paymentMethodId: '',
     autopay: false,
-    contact: '',
+    contactId: '',
 });
 const bill = ref(blankBill());
 
@@ -123,6 +125,7 @@ function submitAdd(): void {
             categoryId: expense.value.categoryId,
             note: expense.value.note,
             paymentMethodId: expense.value.paymentMethodId || null,
+            paidToId: expense.value.paidToId || null,
         });
     } else {
         if (bill.value.name.trim() === '') {
@@ -154,7 +157,7 @@ function submitAdd(): void {
                 bill.value.autopay &&
                 !bill.value.variable &&
                 bill.value.everyMonths !== 0,
-            contact: bill.value.contact || undefined,
+            contactId: bill.value.contactId || undefined,
         });
     }
 
@@ -230,26 +233,31 @@ function submitAdd(): void {
                         {{
                             addMode === 'expense'
                                 ? 'Money that left the household.'
-                                : 'Something you pay on a schedule, or once on a set date.'
+                                : 'A payment due on a schedule or a set date.'
                         }}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div
-                    class="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+                    class="relative grid grid-cols-2 rounded-lg bg-muted p-1"
                     role="tablist"
                 >
+                    <span
+                        class="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-md bg-card shadow-xs transition-transform duration-200 ease-out motion-reduce:transition-none"
+                        :class="addMode === 'bill' && 'translate-x-full'"
+                        aria-hidden="true"
+                    />
                     <button
                         v-for="mode in ['expense', 'bill'] as const"
                         :key="mode"
                         type="button"
                         role="tab"
                         :aria-selected="addMode === mode"
-                        class="rounded-md py-1.5 text-sm capitalize"
+                        class="relative rounded-md py-1.5 text-sm capitalize transition-colors"
                         :class="
                             addMode === mode
-                                ? 'bg-card font-medium shadow-xs'
-                                : 'text-muted-foreground'
+                                ? 'font-medium text-foreground'
+                                : 'text-muted-foreground hover:text-foreground'
                         "
                         @click="addMode = mode"
                     >
@@ -258,177 +266,77 @@ function submitAdd(): void {
                 </div>
 
                 <form class="grid gap-4" @submit.prevent="submitAdd">
-                    <template v-if="addMode === 'expense'">
-                        <div class="grid gap-2">
-                            <Label for="expense-amount">Amount</Label>
-                            <Input
-                                id="expense-amount"
-                                v-model="expense.amount"
-                                inputmode="decimal"
-                                placeholder="0.00"
-                                autofocus
-                                :aria-invalid="addError?.field === 'amount'"
-                            />
-                            <p
-                                v-if="addError?.field === 'amount'"
-                                class="text-sm text-destructive"
-                            >
-                                {{ addError.message }}
-                            </p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
+                    <!-- Both panes share one grid cell, so the dialog keeps the taller one's height. -->
+                    <div class="grid">
+                        <div
+                            class="grid content-start gap-4 transition-opacity duration-200 [grid-area:1/1]"
+                            :class="
+                                addMode !== 'expense' &&
+                                'pointer-events-none opacity-0'
+                            "
+                            :inert="addMode !== 'expense'"
+                        >
                             <div class="grid gap-2">
-                                <Label for="expense-category">Category</Label>
-                                <select
-                                    id="expense-category"
-                                    v-model="expense.categoryId"
-                                    :class="selectClass"
-                                >
-                                    <option
-                                        v-for="category in categories"
-                                        :key="category.id"
-                                        :value="category.id"
-                                    >
-                                        {{ category.name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="grid gap-2">
-                                <Label for="expense-date">Date</Label>
+                                <Label for="expense-amount">Amount</Label>
                                 <Input
-                                    id="expense-date"
-                                    v-model="expense.paidOn"
-                                    type="date"
+                                    id="expense-amount"
+                                    v-model="expense.amount"
+                                    inputmode="decimal"
+                                    placeholder="0.00"
+                                    autofocus
+                                    :aria-invalid="addError?.field === 'amount'"
                                 />
+                                <p
+                                    v-if="addError?.field === 'amount'"
+                                    class="text-sm text-destructive"
+                                >
+                                    {{ addError.message }}
+                                </p>
                             </div>
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="expense-note">Note</Label>
-                            <Input
-                                id="expense-note"
-                                v-model="expense.note"
-                                placeholder="Loblaws"
-                            />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="expense-method">Paid from</Label>
-                            <select
-                                id="expense-method"
-                                v-model="expense.paymentMethodId"
-                                :class="selectClass"
-                            >
-                                <option value="">Not recorded</option>
-                                <option
-                                    v-for="method in paymentMethods"
-                                    :key="method.id"
-                                    :value="method.id"
-                                >
-                                    {{ method.name }}
-                                </option>
-                            </select>
-                        </div>
-                    </template>
-
-                    <template v-else>
-                        <div class="grid gap-2">
-                            <Label for="bill-name">Name</Label>
-                            <Input
-                                id="bill-name"
-                                v-model="bill.name"
-                                placeholder="Home insurance"
-                                :aria-invalid="addError?.field === 'name'"
-                            />
-                            <p
-                                v-if="addError?.field === 'name'"
-                                class="text-sm text-destructive"
-                            >
-                                {{ addError.message }}
-                            </p>
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="bill-amount">
-                                {{
-                                    bill.variable ? 'Typical amount' : 'Amount'
-                                }}
-                            </Label>
-                            <Input
-                                id="bill-amount"
-                                v-model="bill.amount"
-                                inputmode="decimal"
-                                placeholder="0.00"
-                                :aria-invalid="addError?.field === 'amount'"
-                            />
-                            <p
-                                v-if="addError?.field === 'amount'"
-                                class="text-sm text-destructive"
-                            >
-                                {{ addError.message }}
-                            </p>
-                            <label class="flex items-center gap-2 text-sm">
-                                <input
-                                    v-model="bill.variable"
-                                    type="checkbox"
-                                />
-                                The amount changes each time (hydro, gas)
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="grid gap-2">
-                                <Label for="bill-repeat">Repeats</Label>
-                                <select
-                                    id="bill-repeat"
-                                    v-model.number="bill.everyMonths"
-                                    :class="selectClass"
-                                >
-                                    <option
-                                        v-for="(label, months) in repeatLabels"
-                                        :key="months"
-                                        :value="Number(months)"
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="grid gap-2">
+                                    <Label for="expense-category"
+                                        >Category</Label
                                     >
-                                        {{ label }}
-                                    </option>
-                                </select>
+                                    <select
+                                        id="expense-category"
+                                        v-model="expense.categoryId"
+                                        :class="selectClass"
+                                    >
+                                        <option
+                                            v-for="category in categories"
+                                            :key="category.id"
+                                            :value="category.id"
+                                        >
+                                            {{ category.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="expense-date">Date</Label>
+                                    <Input
+                                        id="expense-date"
+                                        v-model="expense.paidOn"
+                                        type="date"
+                                    />
+                                </div>
                             </div>
                             <div class="grid gap-2">
-                                <Label for="bill-first">
-                                    {{
-                                        bill.everyMonths === 0
-                                            ? 'Due on'
-                                            : 'Next due'
-                                    }}
-                                </Label>
+                                <Label for="expense-note">Note</Label>
                                 <Input
-                                    id="bill-first"
-                                    v-model="bill.firstDueOn"
-                                    type="date"
+                                    id="expense-note"
+                                    v-model="expense.note"
+                                    placeholder="Loblaws"
                                 />
                             </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
                             <div class="grid gap-2">
-                                <Label for="bill-category">Category</Label>
+                                <Label for="expense-method">Paid from</Label>
                                 <select
-                                    id="bill-category"
-                                    v-model="bill.categoryId"
+                                    id="expense-method"
+                                    v-model="expense.paymentMethodId"
                                     :class="selectClass"
                                 >
-                                    <option
-                                        v-for="category in categories"
-                                        :key="category.id"
-                                        :value="category.id"
-                                    >
-                                        {{ category.name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="grid gap-2">
-                                <Label for="bill-method">Paid from</Label>
-                                <select
-                                    id="bill-method"
-                                    v-model="bill.paymentMethodId"
-                                    :class="selectClass"
-                                >
-                                    <option value="">Not set</option>
+                                    <option value="">Not recorded</option>
                                     <option
                                         v-for="method in paymentMethods"
                                         :key="method.id"
@@ -438,35 +346,172 @@ function submitAdd(): void {
                                     </option>
                                 </select>
                             </div>
+                            <div class="grid gap-2">
+                                <Label for="expense-paid-to"
+                                    >Paid to (optional)</Label
+                                >
+                                <ContactSelect
+                                    id="expense-paid-to"
+                                    v-model="expense.paidToId"
+                                    :select-class="selectClass"
+                                    empty-label="No one in particular"
+                                />
+                            </div>
                         </div>
-                        <div class="grid gap-2">
-                            <Label for="bill-contact">Contact (optional)</Label>
-                            <Input
-                                id="bill-contact"
-                                v-model="bill.contact"
-                                placeholder="Jane Ko · insurance broker"
-                            />
-                        </div>
-                        <label
-                            class="flex items-center gap-2 text-sm"
+
+                        <div
+                            class="grid content-start gap-4 transition-opacity duration-200 [grid-area:1/1]"
                             :class="
-                                (bill.variable || bill.everyMonths === 0) &&
-                                'opacity-50'
+                                addMode !== 'bill' &&
+                                'pointer-events-none opacity-0'
                             "
+                            :inert="addMode !== 'bill'"
                         >
-                            <input
-                                v-model="bill.autopay"
-                                type="checkbox"
-                                :disabled="
-                                    bill.variable || bill.everyMonths === 0
+                            <div class="grid gap-2">
+                                <Label for="bill-name">Name</Label>
+                                <Input
+                                    id="bill-name"
+                                    v-model="bill.name"
+                                    placeholder="Home insurance"
+                                    :aria-invalid="addError?.field === 'name'"
+                                />
+                                <p
+                                    v-if="addError?.field === 'name'"
+                                    class="text-sm text-destructive"
+                                >
+                                    {{ addError.message }}
+                                </p>
+                            </div>
+                            <div class="grid gap-2">
+                                <Label for="bill-amount">
+                                    {{
+                                        bill.variable
+                                            ? 'Typical amount'
+                                            : 'Amount'
+                                    }}
+                                </Label>
+                                <Input
+                                    id="bill-amount"
+                                    v-model="bill.amount"
+                                    inputmode="decimal"
+                                    placeholder="0.00"
+                                    :aria-invalid="addError?.field === 'amount'"
+                                />
+                                <p
+                                    v-if="addError?.field === 'amount'"
+                                    class="text-sm text-destructive"
+                                >
+                                    {{ addError.message }}
+                                </p>
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input
+                                        v-model="bill.variable"
+                                        type="checkbox"
+                                    />
+                                    The amount changes each time (hydro, gas)
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="grid gap-2">
+                                    <Label for="bill-repeat">Repeats</Label>
+                                    <select
+                                        id="bill-repeat"
+                                        v-model.number="bill.everyMonths"
+                                        :class="selectClass"
+                                    >
+                                        <option
+                                            v-for="(
+                                                label, months
+                                            ) in repeatLabels"
+                                            :key="months"
+                                            :value="Number(months)"
+                                        >
+                                            {{ label }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="bill-first">
+                                        {{
+                                            bill.everyMonths === 0
+                                                ? 'Due on'
+                                                : 'Next due'
+                                        }}
+                                    </Label>
+                                    <Input
+                                        id="bill-first"
+                                        v-model="bill.firstDueOn"
+                                        type="date"
+                                    />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="grid gap-2">
+                                    <Label for="bill-category">Category</Label>
+                                    <select
+                                        id="bill-category"
+                                        v-model="bill.categoryId"
+                                        :class="selectClass"
+                                    >
+                                        <option
+                                            v-for="category in categories"
+                                            :key="category.id"
+                                            :value="category.id"
+                                        >
+                                            {{ category.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="bill-method">Paid from</Label>
+                                    <select
+                                        id="bill-method"
+                                        v-model="bill.paymentMethodId"
+                                        :class="selectClass"
+                                    >
+                                        <option value="">Not set</option>
+                                        <option
+                                            v-for="method in paymentMethods"
+                                            :key="method.id"
+                                            :value="method.id"
+                                        >
+                                            {{ method.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid gap-2">
+                                <Label for="bill-contact"
+                                    >Contact (optional)</Label
+                                >
+                                <ContactSelect
+                                    id="bill-contact"
+                                    v-model="bill.contactId"
+                                    :select-class="selectClass"
+                                    empty-label="None"
+                                />
+                            </div>
+                            <label
+                                class="flex items-center gap-2 text-sm"
+                                :class="
+                                    (bill.variable || bill.everyMonths === 0) &&
+                                    'opacity-50'
                                 "
-                            />
-                            Autopay: record it as paid on each due date
-                            <span class="text-xs text-muted-foreground">
-                                (fixed, repeating bills only)
-                            </span>
-                        </label>
-                    </template>
+                            >
+                                <input
+                                    v-model="bill.autopay"
+                                    type="checkbox"
+                                    :disabled="
+                                        bill.variable || bill.everyMonths === 0
+                                    "
+                                />
+                                Autopay: record it as paid on each due date
+                                <span class="text-xs text-muted-foreground">
+                                    (fixed, repeating bills only)
+                                </span>
+                            </label>
+                        </div>
+                    </div>
 
                     <DialogFooter>
                         <Button type="submit"> Add {{ addMode }} </Button>

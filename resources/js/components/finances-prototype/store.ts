@@ -8,10 +8,29 @@
  * `project`, which is enough to see where they'd surface in Finances. The real
  * model keeps them on the project (#6).
  */
+import {
+    Car,
+    CircleEllipsis,
+    Hammer,
+    House,
+    PawPrint,
+    ShoppingCart,
+    Tv,
+    UtensilsCrossed,
+    Zap,
+} from '@lucide/vue';
+import type { Component } from 'vue';
 import { computed, reactive, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
-export type Category = { id: string; name: string };
+/** Each category carries an icon and a colour tone (badge background + ink). */
+export type Category = {
+    id: string;
+    name: string;
+    icon: Component;
+    tone: string;
+};
+export type Contact = { id: string; name: string; role: string };
 export type PaymentMethod = { id: string; name: string };
 
 /** 0 = once, otherwise repeats every N months. */
@@ -27,7 +46,7 @@ export type Bill = {
     everyMonths: Repeat;
     autopay: boolean;
     paymentMethodId: string | null;
-    contact?: string;
+    contactId?: string;
     project?: { name: string; contractor: string };
 };
 
@@ -38,6 +57,7 @@ export type Expense = {
     categoryId: string;
     note: string;
     paymentMethodId: string | null;
+    paidToId?: string | null;
     billId: string | null;
     occurrenceOn: string | null;
 };
@@ -54,16 +74,82 @@ export type Occurrence = {
 };
 
 export const categories: Category[] = [
-    { id: 'housing', name: 'Housing' },
-    { id: 'groceries', name: 'Groceries' },
-    { id: 'dining', name: 'Dining' },
-    { id: 'transport', name: 'Transport' },
-    { id: 'utilities', name: 'Utilities' },
-    { id: 'subscriptions', name: 'Subscriptions' },
-    { id: 'pets', name: 'Pets' },
-    { id: 'home', name: 'Home & projects' },
-    { id: 'other', name: 'Other' },
+    {
+        id: 'housing',
+        name: 'Housing',
+        icon: House,
+        tone: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
+    },
+    {
+        id: 'groceries',
+        name: 'Groceries',
+        icon: ShoppingCart,
+        tone: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+    },
+    {
+        id: 'dining',
+        name: 'Dining',
+        icon: UtensilsCrossed,
+        tone: 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
+    },
+    {
+        id: 'transport',
+        name: 'Transport',
+        icon: Car,
+        tone: 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
+    },
+    {
+        id: 'utilities',
+        name: 'Utilities',
+        icon: Zap,
+        tone: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300',
+    },
+    {
+        id: 'subscriptions',
+        name: 'Subscriptions',
+        icon: Tv,
+        tone: 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300',
+    },
+    {
+        id: 'pets',
+        name: 'Pets',
+        icon: PawPrint,
+        tone: 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300',
+    },
+    {
+        id: 'home',
+        name: 'Home & projects',
+        icon: Hammer,
+        tone: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+    },
+    {
+        id: 'other',
+        name: 'Other',
+        icon: CircleEllipsis,
+        tone: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+    },
 ];
+
+export const contactRoles = [
+    'Insurance broker',
+    'Mortgage broker',
+    'Realtor',
+    'Contractor',
+    'Plumber',
+    'Electrician',
+    'Roofer',
+    'Handyman',
+    'Vet',
+    'Utility provider',
+    'Other',
+];
+
+export const contacts = reactive<Contact[]>([
+    { id: 'sam', name: 'Sam Patel', role: 'Mortgage broker' },
+    { id: 'jane', name: 'Jane Ko', role: 'Insurance broker' },
+    { id: 'northline', name: 'Northline Exteriors', role: 'Roofer' },
+    { id: 'hydro-one', name: 'Hydro One', role: 'Utility provider' },
+]);
 
 export const paymentMethods: PaymentMethod[] = [
     { id: 'td-chq', name: 'TD chequing' },
@@ -126,7 +212,7 @@ export const bills = reactive<Bill[]>([
         everyMonths: 1,
         autopay: true,
         paymentMethodId: 'td-chq',
-        contact: 'Sam Patel · mortgage broker',
+        contactId: 'sam',
     },
     {
         id: 'internet',
@@ -171,7 +257,7 @@ export const bills = reactive<Bill[]>([
         everyMonths: 1,
         autopay: true,
         paymentMethodId: 'td-chq',
-        contact: 'Jane Ko · insurance broker',
+        contactId: 'jane',
     },
     {
         id: 'gas',
@@ -194,6 +280,7 @@ export const bills = reactive<Bill[]>([
         everyMonths: 1,
         autopay: false,
         paymentMethodId: 'td-visa',
+        contactId: 'hydro-one',
     },
     {
         id: 'spotify',
@@ -228,6 +315,7 @@ export const bills = reactive<Bill[]>([
             everyMonths: 0,
             autopay: false,
             paymentMethodId: 'td-chq',
+            contactId: 'northline',
             project: {
                 name: 'Eaves, soffits & fascia',
                 contractor: 'Northline Exteriors',
@@ -368,6 +456,23 @@ export const state = reactive({
 let nextId = 0;
 const record = (message: string) =>
     state.log.unshift(`${new Date().toLocaleTimeString()} — ${message}`);
+
+export const category = (id: string): Category =>
+    categories.find((c) => c.id === id) ?? categories[categories.length - 1];
+
+export const contactLabel = (id?: string | null): string | null => {
+    const contact = contacts.find((c) => c.id === id);
+
+    return contact ? `${contact.name} · ${contact.role.toLowerCase()}` : null;
+};
+
+export function addContact(input: Omit<Contact, 'id'>): string {
+    const id = `contact-${++nextId}`;
+    contacts.push({ id, ...input });
+    record(`Added contact "${input.name}" (${input.role})`);
+
+    return id;
+}
 
 export const categoryName = (id: string): string =>
     categories.find((c) => c.id === id)?.name ?? id;

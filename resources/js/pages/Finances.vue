@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * PROTOTYPE: five Finances variants on the real /finances route, switched
- * with ?variant=A–E (D is the default). All share one in-memory store, so adding an expense or
+ * with ?variant=A–E (E is the default). All share one in-memory store, so adding an expense or
  * marking a bill paid in one variant shows up in the others. Reload resets.
  */
 import { Head, usePage } from '@inertiajs/vue3';
@@ -20,13 +20,13 @@ const variants = [
     { key: 'B', label: 'Statement' },
     { key: 'C', label: 'Categories' },
     { key: 'D', label: 'Ledger v2' },
-    { key: 'E', label: 'Calendar' },
+    { key: 'E', label: 'Ledger v3' },
 ];
 
 const page = usePage();
 const variant = computed(
     () =>
-        new URLSearchParams(page.url.split('?')[1] ?? '').get('variant') ?? 'D',
+        new URLSearchParams(page.url.split('?')[1] ?? '').get('variant') ?? 'E',
 );
 </script>
 

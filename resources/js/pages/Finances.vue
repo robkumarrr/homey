@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Ellipsis, Pencil, Plus } from '@lucide/vue';
+import { Ellipsis, History, Pencil, Plus, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CategoryBadge from '@/components/finances/CategoryBadge.vue';
+import DeleteExpenseDialog from '@/components/finances/DeleteExpenseDialog.vue';
 import ExpenseDialog from '@/components/finances/ExpenseDialog.vue';
 import MonthSwitcher from '@/components/finances/MonthSwitcher.vue';
+import RecentlyDeletedSheet from '@/components/finances/RecentlyDeletedSheet.vue';
 import SortMenu from '@/components/finances/SortMenu.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,20 +16,29 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatCents, formatDay } from '@/lib/money';
-import type { Category, Expense, SortDirection, SortKey } from '@/types';
+import type {
+    Category,
+    DeletedExpense,
+    Expense,
+    SortDirection,
+    SortKey,
+} from '@/types';
 
 const props = defineProps<{
     month: string;
     categories: Category[];
     expenses: Expense[];
     spentCents: number;
+    deletedExpenses: DeletedExpense[];
 }>();
 
 const categoriesById = computed(
     () => new Map(props.categories.map((category) => [category.id, category])),
 );
+const category = (categoryId: number): Category =>
+    categoriesById.value.get(categoryId)!;
 const categoryFor = (expense: Expense): Category =>
-    categoriesById.value.get(expense.category_id)!;
+    category(expense.category_id);
 const categoryPosition = (expense: Expense): number =>
     props.categories.indexOf(categoryFor(expense));
 
@@ -65,6 +76,9 @@ function openEdit(expense: Expense): void {
     editing.value = expense;
     dialogOpen.value = true;
 }
+
+const deleting = ref<Expense | null>(null);
+const showDeleted = ref(false);
 </script>
 
 <template>
@@ -76,14 +90,33 @@ function openEdit(expense: Expense): void {
                 <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">
                     Finances
                 </h1>
-                <Button
-                    size="sm"
-                    class="px-2.5"
-                    data-test="add-button"
-                    @click="openAdd"
-                >
-                    <Plus /> Add
-                </Button>
+                <div class="flex items-center gap-1.5">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        class="text-muted-foreground"
+                        aria-label="Recently deleted"
+                        data-test="recently-deleted"
+                        @click="showDeleted = true"
+                    >
+                        <History />
+                        <span class="hidden sm:inline">Recently deleted</span>
+                        <span
+                            v-if="deletedExpenses.length"
+                            class="rounded-full bg-muted px-1.5 text-[11px] tabular-nums"
+                        >
+                            {{ deletedExpenses.length }}
+                        </span>
+                    </Button>
+                    <Button
+                        size="sm"
+                        class="px-2.5"
+                        data-test="add-button"
+                        @click="openAdd"
+                    >
+                        <Plus /> Add
+                    </Button>
+                </div>
             </div>
             <div class="flex justify-end">
                 <MonthSwitcher :month="month" class="-mr-1.5" />
@@ -172,11 +205,25 @@ function openEdit(expense: Expense): void {
                             <DropdownMenuItem @select="openEdit(expense)">
                                 <Pencil /> Edit
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                                variant="destructive"
+                                @select="deleting = expense"
+                            >
+                                <Trash2 /> Delete…
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </li>
             </ul>
         </section>
+
+        <DeleteExpenseDialog v-model:expense="deleting" />
+
+        <RecentlyDeletedSheet
+            v-model:open="showDeleted"
+            :deleted-expenses="deletedExpenses"
+            :category-for="category"
+        />
 
         <ExpenseDialog
             v-model:open="dialogOpen"

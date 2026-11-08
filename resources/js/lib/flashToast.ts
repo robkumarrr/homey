@@ -11,6 +11,18 @@ export function initializeFlashToast(): void {
             return;
         }
 
-        toast[data.type](data.message);
+        const undo = data.undo;
+
+        toast[data.type](data.message, {
+            action: undo && {
+                label: 'Undo',
+                onClick: () =>
+                    router.visit(undo.url, {
+                        method: undo.method,
+                        data: undo.data ?? {},
+                        preserveScroll: true,
+                    }),
+            },
+        });
     });
 }

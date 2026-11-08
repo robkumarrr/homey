@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Finances;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\DeletedExpense;
 use App\Models\Expense;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -47,6 +48,19 @@ class FinancesController extends Controller
                 ]),
             'expenses' => $expenses,
             'spentCents' => (int) $expenses->sum('amount_cents'),
+            'deletedExpenses' => DeletedExpense::query()
+                ->latest('deleted_at')
+                ->latest('id')
+                ->limit(100)
+                ->get()
+                ->map(fn (DeletedExpense $deleted) => [
+                    'id' => $deleted->id,
+                    'name' => $deleted->payload['name'],
+                    'amount_cents' => $deleted->payload['amount_cents'],
+                    'category_id' => $deleted->payload['category_id'],
+                    'paid_on' => $deleted->payload['paid_on'],
+                    'deleted_at' => $deleted->deleted_at->toIso8601String(),
+                ]),
         ]);
     }
 }

@@ -172,6 +172,10 @@ const toggleAppearance = () =>
             </ul>
         </nav>
 
-        <Toaster />
+        <Toaster
+            :mobile-offset="{
+                bottom: 'calc(5rem + env(safe-area-inset-bottom))',
+            }"
+        />
     </div>
 </template>

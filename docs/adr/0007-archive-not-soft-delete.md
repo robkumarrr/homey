@@ -4,4 +4,4 @@ Removing anything that history points at, such as a house, category, commitment,
 
 ## Consequences
 
-Records of things that happened, like expenses, are hard-deleted when entered by mistake. Foreign keys restrict deleting anything that history depends on, so destroy actions archive instead.
+Records of things that happened, like expenses, are deleted for real when entered by mistake, after a copy goes to Recently deleted (ADR 0011). Foreign keys restrict deleting anything that history depends on, so destroy actions archive instead.

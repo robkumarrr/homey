@@ -17,19 +17,23 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ContactSelect from './ContactSelect.vue';
-import { formatDay, parseCents } from './format';
+import { formatDay, money, parseCents } from './format';
 import {
     addBill,
     addExpense,
     addingExpense,
     addMode,
     categories,
+    confirmingDelete,
+    deleteExpense,
+    editing,
     lastPaidCents,
     payOccurrence,
     paying,
     paymentMethods,
     repeatLabels,
     today,
+    updateExpense,
 } from './store';
 import type { Repeat } from './store';
 
@@ -100,12 +104,29 @@ const bill = ref(blankBill());
 const addError = ref<{ field: string; message: string } | null>(null);
 
 watch(addingExpense, (open) => {
-    if (open) {
-        expense.value = blankExpense();
-        bill.value = blankBill();
-        addError.value = null;
+    if (!open) {
+        return;
     }
+
+    const current = editing.value;
+    expense.value = current
+        ? {
+              amount: (current.amountCents / 100).toFixed(2),
+              paidOn: current.paidOn,
+              categoryId: current.categoryId,
+              note: current.note,
+              paymentMethodId: current.paymentMethodId ?? '',
+              paidToId: current.paidToId ?? '',
+          }
+        : blankExpense();
+    bill.value = blankBill();
+    addError.value = null;
 });
+
+function confirmDelete(): void {
+    deleteExpense(confirmingDelete.value!);
+    confirmingDelete.value = null;
+}
 
 watch(addMode, () => (addError.value = null));
 
@@ -119,14 +140,20 @@ function submitAdd(): void {
             return;
         }
 
-        addExpense({
+        const fields = {
             amountCents: cents,
             paidOn: expense.value.paidOn,
             categoryId: expense.value.categoryId,
             note: expense.value.note,
             paymentMethodId: expense.value.paymentMethodId || null,
             paidToId: expense.value.paidToId || null,
-        });
+        };
+
+        if (editing.value) {
+            updateExpense(editing.value, fields);
+        } else {
+            addExpense(fields);
+        }
     } else {
         if (bill.value.name.trim() === '') {
             addError.value = {
@@ -171,7 +198,10 @@ function submitAdd(): void {
             :open="paying !== null"
             @update:open="(open) => !open && (paying = null)"
         >
-            <DialogContent v-if="paying" class="sm:max-w-sm">
+            <DialogContent
+                v-if="paying"
+                class="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:max-w-sm sm:p-6"
+            >
                 <DialogHeader>
                     <DialogTitle>Paid {{ paying.bill.name }}</DialogTitle>
                     <DialogDescription>
@@ -226,9 +256,13 @@ function submitAdd(): void {
             :open="addingExpense"
             @update:open="(open) => (addingExpense = open)"
         >
-            <DialogContent class="sm:max-w-md">
+            <DialogContent
+                class="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:max-w-md sm:p-6"
+            >
                 <DialogHeader>
-                    <DialogTitle>Add</DialogTitle>
+                    <DialogTitle>{{
+                        editing ? 'Edit expense' : 'Add'
+                    }}</DialogTitle>
                     <DialogDescription>
                         {{
                             addMode === 'expense'
@@ -239,6 +273,7 @@ function submitAdd(): void {
                 </DialogHeader>
 
                 <div
+                    v-if="!editing"
                     class="relative grid grid-cols-2 rounded-lg bg-muted p-1"
                     role="tablist"
                 >
@@ -293,7 +328,7 @@ function submitAdd(): void {
                                     {{ addError.message }}
                                 </p>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-3 [&>*]:min-w-0">
                                 <div class="grid gap-2">
                                     <Label for="expense-category"
                                         >Category</Label
@@ -411,7 +446,7 @@ function submitAdd(): void {
                                     The amount changes each time (hydro, gas)
                                 </label>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-3 [&>*]:min-w-0">
                                 <div class="grid gap-2">
                                     <Label for="bill-repeat">Repeats</Label>
                                     <select
@@ -445,7 +480,7 @@ function submitAdd(): void {
                                     />
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-3 [&>*]:min-w-0">
                                 <div class="grid gap-2">
                                     <Label for="bill-category">Category</Label>
                                     <select
@@ -514,9 +549,39 @@ function submitAdd(): void {
                     </div>
 
                     <DialogFooter>
-                        <Button type="submit"> Add {{ addMode }} </Button>
+                        <Button type="submit">
+                            {{ editing ? 'Save changes' : `Add ${addMode}` }}
+                        </Button>
                     </DialogFooter>
                 </form>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog
+            :open="confirmingDelete !== null"
+            @update:open="(open) => !open && (confirmingDelete = null)"
+        >
+            <DialogContent
+                v-if="confirmingDelete"
+                class="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:max-w-sm sm:p-6"
+            >
+                <DialogHeader>
+                    <DialogTitle>Delete this expense?</DialogTitle>
+                    <DialogDescription>
+                        {{ confirmingDelete.note || 'Expense' }} ·
+                        {{ money(confirmingDelete.amountCents) }} ·
+                        {{ formatDay(confirmingDelete.paidOn) }}. You can undo
+                        right after, or restore it later from Recently deleted.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter class="gap-2">
+                    <Button variant="outline" @click="confirmingDelete = null">
+                        Cancel
+                    </Button>
+                    <Button variant="destructive" @click="confirmDelete">
+                        Delete
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     </div>

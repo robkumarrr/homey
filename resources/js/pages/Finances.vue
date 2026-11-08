@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * PROTOTYPE: five Finances variants on the real /finances route, switched
- * with ?variant=A–E (E is the default). All share one in-memory store, so adding an expense or
+ * PROTOTYPE: six Finances variants on the real /finances route, switched
+ * with ?variant=A–F (F is the default). All share one in-memory store, so adding an expense or
  * marking a bill paid in one variant shows up in the others. Reload resets.
  */
 import { Head, usePage } from '@inertiajs/vue3';
@@ -13,6 +13,7 @@ import VariantB from '@/components/finances-prototype/VariantB.vue';
 import VariantC from '@/components/finances-prototype/VariantC.vue';
 import VariantD from '@/components/finances-prototype/VariantD.vue';
 import VariantE from '@/components/finances-prototype/VariantE.vue';
+import VariantF from '@/components/finances-prototype/VariantF.vue';
 import PrototypeSwitcher from '@/components/PrototypeSwitcher.vue';
 
 const variants = [
@@ -21,12 +22,13 @@ const variants = [
     { key: 'C', label: 'Categories' },
     { key: 'D', label: 'Ledger v2' },
     { key: 'E', label: 'Ledger v3' },
+    { key: 'F', label: 'Ledger v4' },
 ];
 
 const page = usePage();
 const variant = computed(
     () =>
-        new URLSearchParams(page.url.split('?')[1] ?? '').get('variant') ?? 'E',
+        new URLSearchParams(page.url.split('?')[1] ?? '').get('variant') ?? 'F',
 );
 </script>
 
@@ -38,7 +40,8 @@ const variant = computed(
         <VariantB v-else-if="variant === 'B'" />
         <VariantC v-else-if="variant === 'C'" />
         <VariantD v-else-if="variant === 'D'" />
-        <VariantE v-else />
+        <VariantE v-else-if="variant === 'E'" />
+        <VariantF v-else />
 
         <FinanceDialogs />
 

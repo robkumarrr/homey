@@ -449,6 +449,12 @@ function seedExpenses(): Expense[] {
 export const state = reactive({
     expenses: seedExpenses(),
     skipped: new Set<string>(),
+    /** Deleted expenses and undone payments, newest first, restorable. */
+    deleted: [] as {
+        expense: Expense;
+        reason: 'deleted' | 'unpaid';
+        at: Date;
+    }[],
     monthOffset: 0,
     log: [] as string[],
 });
@@ -595,25 +601,71 @@ export function shiftMonth(step: number): void {
     state.monthOffset = Math.max(-3, Math.min(2, state.monthOffset + step));
 }
 
+const label = (expense: Expense): string =>
+    expense.note || categoryName(expense.categoryId);
+
+const dollars = (cents: number): string => (cents / 100).toFixed(2);
+
+/**
+ * Every change confirms with a toast that can undo it. Anything removed also
+ * lands in "Recently deleted", so a missed toast isn't the last chance.
+ */
+function confirmWithUndo(message: string, undo: () => void): void {
+    toast(message, { action: { label: 'Undo', onClick: undo } });
+}
+
+const removeExpense = (expense: Expense): void => {
+    state.expenses = state.expenses.filter((e) => e.id !== expense.id);
+};
+
 export function addExpense(
     input: Omit<Expense, 'id' | 'billId' | 'occurrenceOn'>,
 ): void {
-    state.expenses.push({
+    const expense: Expense = {
         id: `new-${++nextId}`,
         billId: null,
         occurrenceOn: null,
         ...input,
-    });
+    };
+    state.expenses.push(expense);
     record(
-        `Added expense "${input.note || categoryName(input.categoryId)}" ${(input.amountCents / 100).toFixed(2)} on ${input.paidOn}`,
+        `Added expense "${label(expense)}" ${dollars(expense.amountCents)} on ${expense.paidOn}`,
     );
+    confirmWithUndo(`Added "${label(expense)}"`, () => {
+        removeExpense(expense);
+        record(`Undid adding "${label(expense)}"`);
+    });
+}
+
+export function updateExpense(
+    expense: Expense,
+    changes: Partial<Omit<Expense, 'id'>>,
+): void {
+    const before = { ...expense };
+    const target = state.expenses.find((e) => e.id === expense.id);
+
+    if (!target) {
+        return;
+    }
+
+    Object.assign(target, changes);
+    record(`Edited "${label(target)}"`);
+    confirmWithUndo(`Saved "${label(target)}"`, () => {
+        Object.assign(target, before);
+        record(`Undid edit to "${label(target)}"`);
+    });
 }
 
 export function addBill(input: Omit<Bill, 'id'>): void {
-    bills.push({ id: `bill-${++nextId}`, ...input });
+    const bill: Bill = { id: `bill-${++nextId}`, ...input };
+    bills.push(bill);
     record(
-        `Added bill "${input.name}" ${(input.amountCents / 100).toFixed(2)}, ${repeatLabels[input.everyMonths].toLowerCase()} from ${input.firstDueOn}`,
+        `Added bill "${bill.name}" ${dollars(bill.amountCents)}, ${repeatLabels[bill.everyMonths].toLowerCase()} from ${bill.firstDueOn}`,
     );
+    confirmWithUndo(`Added bill "${bill.name}"`, () => {
+        bills.splice(bills.indexOf(bill), 1);
+        record(`Undid adding bill "${bill.name}"`);
+    });
 }
 
 export function payOccurrence(
@@ -624,41 +676,77 @@ export function payOccurrence(
         paymentMethodId: string | null;
     },
 ): void {
-    state.expenses.push({
+    const expense: Expense = {
         id: `new-${++nextId}`,
         categoryId: occurrence.bill.categoryId,
         note: occurrence.bill.name,
         billId: occurrence.bill.id,
         occurrenceOn: occurrence.dueOn,
         ...input,
-    });
+    };
+    state.expenses.push(expense);
     record(
-        `Paid ${occurrence.bill.name} (due ${occurrence.dueOn}) ${(input.amountCents / 100).toFixed(2)} on ${input.paidOn}`,
+        `Paid ${occurrence.bill.name} (due ${occurrence.dueOn}) ${dollars(input.amountCents)} on ${input.paidOn}`,
+    );
+    confirmWithUndo(`Paid ${occurrence.bill.name}`, () => {
+        removeExpense(expense);
+        record(`Undid paying ${occurrence.bill.name}`);
+    });
+}
+
+/** Marks a paid occurrence unpaid again; the payment goes to Recently deleted. */
+export function undoPayment(occurrence: Occurrence): void {
+    const expense = occurrence.expense;
+
+    if (!expense) {
+        return;
+    }
+
+    removeExpense(expense);
+    state.deleted.unshift({ expense, reason: 'unpaid', at: new Date() });
+    record(`Marked ${occurrence.bill.name} (due ${occurrence.dueOn}) unpaid`);
+    confirmWithUndo(`${occurrence.bill.name} marked unpaid`, () =>
+        restoreExpense(expense),
     );
 }
 
 export function toggleSkip(occurrence: Occurrence): void {
-    if (state.skipped.has(occurrence.key)) {
-        state.skipped.delete(occurrence.key);
-        record(`Un-skipped ${occurrence.bill.name} (${occurrence.dueOn})`);
-    } else {
-        state.skipped.add(occurrence.key);
-        record(`Skipped ${occurrence.bill.name} (${occurrence.dueOn})`);
-    }
+    const skipping = !state.skipped.has(occurrence.key);
+    const apply = (skip: boolean) =>
+        skip
+            ? state.skipped.add(occurrence.key)
+            : state.skipped.delete(occurrence.key);
+
+    apply(skipping);
+    record(
+        `${skipping ? 'Skipped' : 'Un-skipped'} ${occurrence.bill.name} (${occurrence.dueOn})`,
+    );
+    confirmWithUndo(
+        `${skipping ? 'Skipped' : 'Un-skipped'} ${occurrence.bill.name}`,
+        () => {
+            apply(!skipping);
+            record(
+                `Undid ${skipping ? 'skip' : 'un-skip'} of ${occurrence.bill.name}`,
+            );
+        },
+    );
 }
 
-/** Deleting is undoable for a few seconds from the toast. */
 export function deleteExpense(expense: Expense): void {
-    state.expenses = state.expenses.filter((e) => e.id !== expense.id);
-    record(`Deleted expense "${expense.note}"`);
-    toast(`Deleted "${expense.note || categoryName(expense.categoryId)}"`, {
-        action: { label: 'Undo', onClick: () => restoreExpense(expense) },
-    });
+    removeExpense(expense);
+    state.deleted.unshift({ expense, reason: 'deleted', at: new Date() });
+    record(`Deleted expense "${label(expense)}"`);
+    confirmWithUndo(`Deleted "${label(expense)}"`, () =>
+        restoreExpense(expense),
+    );
 }
 
 export function restoreExpense(expense: Expense): void {
+    state.deleted = state.deleted.filter(
+        (entry) => entry.expense.id !== expense.id,
+    );
     state.expenses.push(expense);
-    record(`Restored expense "${expense.note}"`);
+    record(`Restored "${label(expense)}"`);
 }
 
 /** Dialog plumbing shared by every variant. */
@@ -666,7 +754,17 @@ export const paying = ref<Occurrence | null>(null);
 export const addingExpense = ref(false);
 export const addMode = ref<'expense' | 'bill'>('expense');
 
+export const editing = ref<Expense | null>(null);
+export const confirmingDelete = ref<Expense | null>(null);
+
 export function openAdd(mode: 'expense' | 'bill' = 'expense'): void {
+    editing.value = null;
     addMode.value = mode;
+    addingExpense.value = true;
+}
+
+export function openEdit(expense: Expense): void {
+    editing.value = expense;
+    addMode.value = 'expense';
     addingExpense.value = true;
 }

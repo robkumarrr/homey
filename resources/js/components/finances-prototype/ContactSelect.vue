@@ -82,7 +82,9 @@ function save(): void {
         </select>
 
         <Dialog :open="creating" @update:open="(open) => !open && cancel()">
-            <DialogContent class="sm:max-w-sm">
+            <DialogContent
+                class="max-h-[calc(100dvh-2rem)] overflow-y-auto p-5 sm:max-w-sm sm:p-6"
+            >
                 <DialogHeader>
                     <DialogTitle>New contact</DialogTitle>
                     <DialogDescription>

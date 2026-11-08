@@ -137,7 +137,11 @@ const selectClass =
                 </div>
 
                 <DialogFooter>
-                    <Button type="submit" :disabled="processing">
+                    <Button
+                        type="submit"
+                        :disabled="processing"
+                        data-test="save-expense"
+                    >
                         {{ expense ? 'Save changes' : 'Add expense' }}
                     </Button>
                 </DialogFooter>

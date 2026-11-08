@@ -193,7 +193,7 @@ function dueText(occurrence: Occurrence): string {
                         </span>
                         <button
                             type="button"
-                            class="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus:opacity-100"
+                            class="text-muted-foreground hover:text-destructive focus:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                             aria-label="Delete expense"
                             @click="deleteExpense(expense)"
                         >

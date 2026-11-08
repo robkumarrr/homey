@@ -1,13 +1,21 @@
 /**
  * PROTOTYPE store for the Finances tab — in-memory fake data shaped like the
  * planned schema (categories, payment methods, commitments shown as "bills",
- * expenses, skipped occurrences). Nothing touches the backend; a reload resets
- * it. Dates are relative to today so the prototype stays plausible.
+ * planned project payments, expenses, skipped occurrences). Nothing touches the
+ * backend; a reload resets it. Dates are relative to today.
+ *
+ * Planned project payments are modelled here as one-off bills carrying a
+ * `project`, which is enough to see where they'd surface in Finances. The real
+ * model keeps them on the project (#6).
  */
 import { computed, reactive, ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 export type Category = { id: string; name: string };
 export type PaymentMethod = { id: string; name: string };
+
+/** 0 = once, otherwise repeats every N months. */
+export type Repeat = 0 | 1 | 3 | 12;
 
 export type Bill = {
     id: string;
@@ -15,11 +23,12 @@ export type Bill = {
     categoryId: string;
     amountCents: number;
     variable: boolean;
-    day: number;
-    everyMonths: 1 | 3;
+    firstDueOn: string;
+    everyMonths: Repeat;
     autopay: boolean;
-    paymentMethodId: string;
+    paymentMethodId: string | null;
     contact?: string;
+    project?: { name: string; contractor: string };
 };
 
 export type Expense = {
@@ -52,7 +61,7 @@ export const categories: Category[] = [
     { id: 'utilities', name: 'Utilities' },
     { id: 'subscriptions', name: 'Subscriptions' },
     { id: 'pets', name: 'Pets' },
-    { id: 'home', name: 'Home' },
+    { id: 'home', name: 'Home & projects' },
     { id: 'other', name: 'Other' },
 ];
 
@@ -63,112 +72,12 @@ export const paymentMethods: PaymentMethod[] = [
     { id: 'ws-visa', name: 'WS Visa Infinite+' },
 ];
 
-export const bills: Bill[] = [
-    {
-        id: 'mortgage',
-        name: 'Mortgage',
-        categoryId: 'housing',
-        amountCents: 214000,
-        variable: false,
-        day: 1,
-        everyMonths: 1,
-        autopay: true,
-        paymentMethodId: 'td-chq',
-        contact: 'Sam Patel · mortgage broker',
-    },
-    {
-        id: 'internet',
-        name: 'Internet',
-        categoryId: 'utilities',
-        amountCents: 8999,
-        variable: false,
-        day: 3,
-        everyMonths: 1,
-        autopay: true,
-        paymentMethodId: 'td-visa',
-    },
-    {
-        id: 'mobile',
-        name: 'Mobile phones',
-        categoryId: 'utilities',
-        amountCents: 9605,
-        variable: false,
-        day: 5,
-        everyMonths: 1,
-        autopay: false,
-        paymentMethodId: 'td-visa',
-    },
-    {
-        id: 'netflix',
-        name: 'Netflix',
-        categoryId: 'subscriptions',
-        amountCents: 2099,
-        variable: false,
-        day: 12,
-        everyMonths: 1,
-        autopay: true,
-        paymentMethodId: 'ws-visa',
-    },
-    {
-        id: 'car',
-        name: 'Car insurance',
-        categoryId: 'transport',
-        amountCents: 18750,
-        variable: false,
-        day: 15,
-        everyMonths: 1,
-        autopay: true,
-        paymentMethodId: 'td-chq',
-        contact: 'Jane Ko · insurance broker',
-    },
-    {
-        id: 'gas',
-        name: 'Gas',
-        categoryId: 'utilities',
-        amountCents: 6400,
-        variable: true,
-        day: 18,
-        everyMonths: 1,
-        autopay: false,
-        paymentMethodId: 'td-visa',
-    },
-    {
-        id: 'hydro',
-        name: 'Hydro',
-        categoryId: 'utilities',
-        amountCents: 11800,
-        variable: true,
-        day: 22,
-        everyMonths: 1,
-        autopay: false,
-        paymentMethodId: 'td-visa',
-    },
-    {
-        id: 'spotify',
-        name: 'Spotify',
-        categoryId: 'subscriptions',
-        amountCents: 1299,
-        variable: false,
-        day: 26,
-        everyMonths: 1,
-        autopay: true,
-        paymentMethodId: 'ws-visa',
-    },
-    {
-        id: 'water',
-        name: 'Water',
-        categoryId: 'utilities',
-        amountCents: 14200,
-        variable: true,
-        day: 28,
-        everyMonths: 3,
-        autopay: false,
-        paymentMethodId: 'td-chq',
-    },
-];
-
-/** The one bill left unpaid this month, so "overdue" shows up. */
-const leftUnpaidThisMonth = 'mobile';
+export const repeatLabels: Record<Repeat, string> = {
+    0: 'Once',
+    1: 'Monthly',
+    3: 'Every 3 months',
+    12: 'Yearly',
+};
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -197,7 +106,156 @@ export const monthStart = (offset: number): Date => {
     return date;
 };
 
-const dueDate = (bill: Bill, start: Date): string => {
+/** A date in the month `offset` months from now, as YYYY-MM-DD. */
+const dayIn = (offset: number, day: number): string => {
+    const start = monthStart(offset);
+
+    return iso(new Date(start.getFullYear(), start.getMonth(), day));
+};
+
+const monthly = (day: number): string => `2020-01-${pad(day)}`;
+
+export const bills = reactive<Bill[]>([
+    {
+        id: 'mortgage',
+        name: 'Mortgage',
+        categoryId: 'housing',
+        amountCents: 214000,
+        variable: false,
+        firstDueOn: monthly(1),
+        everyMonths: 1,
+        autopay: true,
+        paymentMethodId: 'td-chq',
+        contact: 'Sam Patel · mortgage broker',
+    },
+    {
+        id: 'internet',
+        name: 'Internet',
+        categoryId: 'utilities',
+        amountCents: 8999,
+        variable: false,
+        firstDueOn: monthly(3),
+        everyMonths: 1,
+        autopay: true,
+        paymentMethodId: 'td-visa',
+    },
+    {
+        id: 'mobile',
+        name: 'Mobile phones',
+        categoryId: 'utilities',
+        amountCents: 9605,
+        variable: false,
+        firstDueOn: monthly(5),
+        everyMonths: 1,
+        autopay: false,
+        paymentMethodId: 'td-visa',
+    },
+    {
+        id: 'netflix',
+        name: 'Netflix',
+        categoryId: 'subscriptions',
+        amountCents: 2099,
+        variable: false,
+        firstDueOn: monthly(12),
+        everyMonths: 1,
+        autopay: true,
+        paymentMethodId: 'ws-visa',
+    },
+    {
+        id: 'car',
+        name: 'Car insurance',
+        categoryId: 'transport',
+        amountCents: 18750,
+        variable: false,
+        firstDueOn: monthly(15),
+        everyMonths: 1,
+        autopay: true,
+        paymentMethodId: 'td-chq',
+        contact: 'Jane Ko · insurance broker',
+    },
+    {
+        id: 'gas',
+        name: 'Gas',
+        categoryId: 'utilities',
+        amountCents: 6400,
+        variable: true,
+        firstDueOn: monthly(18),
+        everyMonths: 1,
+        autopay: false,
+        paymentMethodId: 'td-visa',
+    },
+    {
+        id: 'hydro',
+        name: 'Hydro',
+        categoryId: 'utilities',
+        amountCents: 11800,
+        variable: true,
+        firstDueOn: monthly(22),
+        everyMonths: 1,
+        autopay: false,
+        paymentMethodId: 'td-visa',
+    },
+    {
+        id: 'spotify',
+        name: 'Spotify',
+        categoryId: 'subscriptions',
+        amountCents: 1299,
+        variable: false,
+        firstDueOn: monthly(26),
+        everyMonths: 1,
+        autopay: true,
+        paymentMethodId: 'ws-visa',
+    },
+    {
+        id: 'water',
+        name: 'Water',
+        categoryId: 'utilities',
+        amountCents: 14200,
+        variable: true,
+        firstDueOn: monthly(28),
+        everyMonths: 3,
+        autopay: false,
+        paymentMethodId: 'td-chq',
+    },
+    ...(['Deposit · 25%', 'Halfway · 25%', 'Final · 50%'] as const).map(
+        (label, index): Bill => ({
+            id: `eaves-${index}`,
+            name: `Eaves & soffits — ${label}`,
+            categoryId: 'home',
+            amountCents: [240000, 240000, 480000][index],
+            variable: false,
+            firstDueOn: dayIn(index - 1, [10, 4, 15][index]),
+            everyMonths: 0,
+            autopay: false,
+            paymentMethodId: 'td-chq',
+            project: {
+                name: 'Eaves, soffits & fascia',
+                contractor: 'Northline Exteriors',
+            },
+        }),
+    ),
+]);
+
+/** The one bill left unpaid this month, so "overdue" shows up. */
+const leftUnpaidThisMonth = 'mobile';
+
+const monthIndex = (date: Date): number =>
+    date.getFullYear() * 12 + date.getMonth();
+
+/** The bill's due date in the month starting at `start`, or null if it isn't due that month. */
+const dueDateIn = (bill: Bill, start: Date): string | null => {
+    const first = parseIso(bill.firstDueOn);
+    const monthsSince = monthIndex(start) - monthIndex(first);
+
+    if (
+        monthsSince < 0 ||
+        (bill.everyMonths === 0
+            ? monthsSince !== 0
+            : monthsSince % bill.everyMonths !== 0)
+    ) {
+        return null;
+    }
+
     const lastDay = new Date(
         start.getFullYear(),
         start.getMonth() + 1,
@@ -208,17 +266,10 @@ const dueDate = (bill: Bill, start: Date): string => {
         new Date(
             start.getFullYear(),
             start.getMonth(),
-            Math.min(bill.day, lastDay),
+            Math.min(first.getDate(), lastDay),
         ),
     );
 };
-
-const billsDueIn = (start: Date): Bill[] =>
-    bills.filter(
-        (bill) =>
-            (start.getFullYear() * 12 + start.getMonth()) % bill.everyMonths ===
-            0,
-    );
 
 /** Small deterministic "random" so the fixtures look varied but stable. */
 const wobble = (seed: number, spread: number): number =>
@@ -234,10 +285,11 @@ function seedExpenses(): Expense[] {
         const start = monthStart(offset);
         const monthSeed = start.getMonth() + 1;
 
-        for (const bill of billsDueIn(start)) {
-            const dueOn = dueDate(bill, start);
+        for (const bill of bills) {
+            const dueOn = dueDateIn(bill, start);
 
             if (
+                !dueOn ||
                 dueOn >= today ||
                 (offset === 0 && bill.id === leftUnpaidThisMonth)
             ) {
@@ -249,7 +301,8 @@ function seedExpenses(): Expense[] {
                     ? dueOn
                     : iso(new Date(parseIso(dueOn).getTime() - 86_400_000)),
                 amountCents: bill.variable
-                    ? bill.amountCents + wobble(monthSeed * bill.day, 3000)
+                    ? bill.amountCents +
+                      wobble(monthSeed * 7 + bill.amountCents, 3000)
                     : bill.amountCents,
                 categoryId: bill.categoryId,
                 note: bill.name,
@@ -320,6 +373,10 @@ export const categoryName = (id: string): string =>
     categories.find((c) => c.id === id)?.name ?? id;
 export const paymentMethodName = (id: string | null): string =>
     id ? (paymentMethods.find((m) => m.id === id)?.name ?? id) : '—';
+export const billFor = (expense: Expense): Bill | undefined =>
+    expense.billId
+        ? bills.find((bill) => bill.id === expense.billId)
+        : undefined;
 
 export const selectedMonth = computed(() => monthStart(state.monthOffset));
 export const monthLabel = computed(() =>
@@ -354,11 +411,16 @@ export const lastPaidCents = (bill: Bill): number =>
         .sort((a, b) => b.paidOn.localeCompare(a.paidOn))[0]?.amountCents ??
     bill.amountCents;
 
-/** Bill occurrences due in the selected month, by due date. */
+/** Bill occurrences (and planned project payments) due in the selected month, by due date. */
 export const monthOccurrences = computed<Occurrence[]>(() =>
-    billsDueIn(selectedMonth.value)
-        .map((bill) => {
-            const dueOn = dueDate(bill, selectedMonth.value);
+    bills
+        .flatMap((bill) => {
+            const dueOn = dueDateIn(bill, selectedMonth.value);
+
+            if (!dueOn) {
+                return [];
+            }
+
             const key = `${bill.id}:${dueOn}`;
             const expense = state.expenses.find(
                 (e) => e.billId === bill.id && e.occurrenceOn === dueOn,
@@ -371,16 +433,20 @@ export const monthOccurrences = computed<Occurrence[]>(() =>
                     ? 'overdue'
                     : 'due';
 
-            return {
-                key,
-                bill,
-                dueOn,
-                status,
-                expense,
-                amountCents:
-                    expense?.amountCents ??
-                    (bill.variable ? lastPaidCents(bill) : bill.amountCents),
-            };
+            return [
+                {
+                    key,
+                    bill,
+                    dueOn,
+                    status,
+                    expense,
+                    amountCents:
+                        expense?.amountCents ??
+                        (bill.variable
+                            ? lastPaidCents(bill)
+                            : bill.amountCents),
+                },
+            ];
         })
         .sort((a, b) => a.dueOn.localeCompare(b.dueOn)),
 );
@@ -438,6 +504,13 @@ export function addExpense(
     );
 }
 
+export function addBill(input: Omit<Bill, 'id'>): void {
+    bills.push({ id: `bill-${++nextId}`, ...input });
+    record(
+        `Added bill "${input.name}" ${(input.amountCents / 100).toFixed(2)}, ${repeatLabels[input.everyMonths].toLowerCase()} from ${input.firstDueOn}`,
+    );
+}
+
 export function payOccurrence(
     occurrence: Occurrence,
     input: {
@@ -469,11 +542,26 @@ export function toggleSkip(occurrence: Occurrence): void {
     }
 }
 
+/** Deleting is undoable for a few seconds from the toast. */
 export function deleteExpense(expense: Expense): void {
     state.expenses = state.expenses.filter((e) => e.id !== expense.id);
     record(`Deleted expense "${expense.note}"`);
+    toast(`Deleted "${expense.note || categoryName(expense.categoryId)}"`, {
+        action: { label: 'Undo', onClick: () => restoreExpense(expense) },
+    });
+}
+
+export function restoreExpense(expense: Expense): void {
+    state.expenses.push(expense);
+    record(`Restored expense "${expense.note}"`);
 }
 
 /** Dialog plumbing shared by every variant. */
 export const paying = ref<Occurrence | null>(null);
 export const addingExpense = ref(false);
+export const addMode = ref<'expense' | 'bill'>('expense');
+
+export function openAdd(mode: 'expense' | 'bill' = 'expense'): void {
+    addMode.value = mode;
+    addingExpense.value = true;
+}

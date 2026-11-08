@@ -54,5 +54,8 @@ jobs:
         env:
           PGPASSWORD: secret
 
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+
       - name: Run CI Checks
         run: composer ci:check

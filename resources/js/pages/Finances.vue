@@ -76,7 +76,12 @@ function openEdit(expense: Expense): void {
                 <h1 class="text-2xl font-semibold tracking-tight md:text-3xl">
                     Finances
                 </h1>
-                <Button size="sm" class="px-2.5" @click="openAdd">
+                <Button
+                    size="sm"
+                    class="px-2.5"
+                    data-test="add-button"
+                    @click="openAdd"
+                >
                     <Plus /> Add
                 </Button>
             </div>
@@ -158,6 +163,7 @@ function openEdit(expense: Expense): void {
                                 type="button"
                                 class="-mr-1 shrink-0 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                                 :aria-label="`More for ${expense.name}`"
+                                data-test="expense-actions"
                             >
                                 <Ellipsis class="size-4" />
                             </button>

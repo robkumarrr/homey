@@ -62,6 +62,9 @@ export type Expense = {
     occurrenceOn: string | null;
 };
 
+export type SortKey = 'date' | 'amount' | 'category' | 'name';
+export type Direction = 'asc' | 'desc';
+
 export type OccurrenceStatus = 'paid' | 'due' | 'overdue' | 'skipped';
 
 export type Occurrence = {

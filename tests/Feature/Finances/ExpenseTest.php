@@ -14,10 +14,10 @@ beforeEach(function () {
 function expenseInput(array $overrides = []): array
 {
     return [
+        'name' => 'Loblaws',
         'amount' => '19.99',
         'category_id' => test()->category->id,
         'paid_on' => '2026-11-07',
-        'note' => 'Loblaws',
         ...$overrides,
     ];
 }
@@ -34,7 +34,7 @@ test('a member can record an expense', function (string $amount, int $cents) {
     expect($expense->amount_cents)->toBe($cents)
         ->and($expense->category_id)->toBe($this->category->id)
         ->and($expense->paid_on->toDateString())->toBe('2026-11-07')
-        ->and($expense->note)->toBe('Loblaws')
+        ->and($expense->name)->toBe('Loblaws')
         ->and($expense->family_id)->toBe($this->family->id)
         ->and($expense->created_by)->toBe($this->user->id);
 })->with([
@@ -51,14 +51,10 @@ test('the amount must be a plain amount above zero', function (string $amount) {
     expect(Expense::withoutGlobalScope(FamilyScope::class)->count())->toBe(0);
 })->with(['abc', '0', '-5', '19.999']);
 
-test('an expense needs a category and a date, and the note is optional', function () {
+test('an expense needs a name, a category and a date', function () {
     $this->actingAs($this->user)
-        ->post(route('finances.expenses.store'), expenseInput(['category_id' => null, 'paid_on' => 'yesterday']))
-        ->assertSessionHasErrors(['category_id', 'paid_on']);
-
-    $this->actingAs($this->user)
-        ->post(route('finances.expenses.store'), expenseInput(['note' => null]))
-        ->assertSessionHasNoErrors();
+        ->post(route('finances.expenses.store'), expenseInput(['name' => '', 'category_id' => null, 'paid_on' => 'yesterday']))
+        ->assertSessionHasErrors(['name', 'category_id', 'paid_on']);
 });
 
 test('another family\'s category cannot be used', function () {
@@ -86,7 +82,7 @@ test('a member can edit an expense', function () {
             'amount' => '$42.50',
             'category_id' => $newCategory->id,
             'paid_on' => '2026-11-02',
-            'note' => 'Costco',
+            'name' => 'Costco',
         ]))
         ->assertSessionHasNoErrors();
 
@@ -95,7 +91,7 @@ test('a member can edit an expense', function () {
     expect($expense->amount_cents)->toBe(4250)
         ->and($expense->category_id)->toBe($newCategory->id)
         ->and($expense->paid_on->toDateString())->toBe('2026-11-02')
-        ->and($expense->note)->toBe('Costco');
+        ->and($expense->name)->toBe('Costco');
 });
 
 test('editing an expense can keep its archived category', function () {

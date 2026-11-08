@@ -74,6 +74,20 @@ const selectClass =
                 @success="open = false"
             >
                 <div class="grid gap-2">
+                    <Label for="expense-name">Name</Label>
+                    <Input
+                        id="expense-name"
+                        name="name"
+                        placeholder="Loblaws"
+                        autocomplete="off"
+                        required
+                        :default-value="expense?.name ?? ''"
+                        :aria-invalid="!!errors.name"
+                    />
+                    <InputError :message="errors.name" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="expense-amount">Amount</Label>
                     <Input
                         id="expense-amount"
@@ -120,18 +134,6 @@ const selectClass =
                         />
                         <InputError :message="errors.paid_on" />
                     </div>
-                </div>
-
-                <div class="grid gap-2">
-                    <Label for="expense-note">Note</Label>
-                    <Input
-                        id="expense-note"
-                        name="note"
-                        placeholder="Loblaws"
-                        :default-value="expense?.note ?? ''"
-                        :aria-invalid="!!errors.note"
-                    />
-                    <InputError :message="errors.note" />
                 </div>
 
                 <DialogFooter>

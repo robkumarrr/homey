@@ -20,12 +20,12 @@ use Illuminate\Support\Carbon;
  * @property int|null $created_by
  * @property int $amount_cents
  * @property Carbon $paid_on
- * @property string|null $note
+ * @property string $name
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Category $category
  */
-#[Fillable(['category_id', 'amount_cents', 'paid_on', 'note'])]
+#[Fillable(['name', 'category_id', 'amount_cents', 'paid_on'])]
 class Expense extends Model
 {
     use BelongsToFamily;

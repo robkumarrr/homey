@@ -30,8 +30,6 @@ const categoryFor = (expense: Expense): Category =>
     categoriesById.value.get(expense.category_id)!;
 const categoryPosition = (expense: Expense): number =>
     props.categories.indexOf(categoryFor(expense));
-const label = (expense: Expense): string =>
-    expense.note || categoryFor(expense).name;
 
 const sortKey = ref<SortKey>('date');
 const sortDirection = ref<SortDirection>('desc');
@@ -46,7 +44,7 @@ const sortedExpenses = computed(() => {
                 : sortKey.value === 'category'
                   ? categoryPosition(a) - categoryPosition(b)
                   : sortKey.value === 'name'
-                    ? label(a).localeCompare(label(b))
+                    ? a.name.localeCompare(b.name)
                     : a.paid_on.localeCompare(b.paid_on);
 
         return (
@@ -143,7 +141,7 @@ function openEdit(expense: Expense): void {
                     <CategoryBadge :category="categoryFor(expense)" />
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-sm leading-5">
-                            {{ label(expense) }}
+                            {{ expense.name }}
                         </p>
                         <p
                             class="truncate text-[11px] leading-4 text-muted-foreground"
@@ -159,7 +157,7 @@ function openEdit(expense: Expense): void {
                             <button
                                 type="button"
                                 class="-mr-1 shrink-0 rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                                :aria-label="`More for ${label(expense)}`"
+                                :aria-label="`More for ${expense.name}`"
                             >
                                 <Ellipsis class="size-4" />
                             </button>

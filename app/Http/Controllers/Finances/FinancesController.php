@@ -30,7 +30,7 @@ class FinancesController extends Controller
             ->whereBetween('paid_on', [$month->toDateString(), $month->endOfMonth()->toDateString()])
             ->orderByDesc('paid_on')
             ->orderByDesc('id')
-            ->get(['id', 'category_id', 'amount_cents', 'paid_on', 'note']);
+            ->get(['id', 'name', 'category_id', 'amount_cents', 'paid_on']);
 
         return Inertia::render('Finances', [
             'month' => $month->format('Y-m'),

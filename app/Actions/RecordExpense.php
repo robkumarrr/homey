@@ -13,16 +13,16 @@ class RecordExpense
      */
     public function handle(
         User $recordedBy,
+        string $name,
         int $amountCents,
         int $categoryId,
         string $paidOn,
-        ?string $note = null,
     ): Expense {
         $expense = new Expense([
+            'name' => $name,
             'amount_cents' => $amountCents,
             'category_id' => $categoryId,
             'paid_on' => $paidOn,
-            'note' => $note,
         ]);
         $expense->created_by = $recordedBy->id;
         $expense->save();

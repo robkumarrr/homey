@@ -30,10 +30,10 @@ export type Category = {
 
 export type Expense = {
     id: number;
+    name: string;
     category_id: number;
     amount_cents: number;
     paid_on: string;
-    note: string | null;
 };
 
 export type SortKey = 'date' | 'amount' | 'category' | 'name';

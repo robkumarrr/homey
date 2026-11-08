@@ -19,10 +19,10 @@ class ExpenseController extends Controller
     {
         $recordExpense->handle(
             recordedBy: $request->user(),
+            name: $request->string('name')->toString(),
             amountCents: $request->amountCents(),
             categoryId: $request->integer('category_id'),
             paidOn: $request->string('paid_on')->toString(),
-            note: $request->validated('note'),
         );
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Expense added.')]);
@@ -36,10 +36,10 @@ class ExpenseController extends Controller
     public function update(ExpenseUpdateRequest $request, Expense $expense): RedirectResponse
     {
         $expense->update([
+            'name' => $request->string('name')->toString(),
             'amount_cents' => $request->amountCents(),
             'category_id' => $request->integer('category_id'),
             'paid_on' => $request->string('paid_on')->toString(),
-            'note' => $request->validated('note'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Expense updated.')]);

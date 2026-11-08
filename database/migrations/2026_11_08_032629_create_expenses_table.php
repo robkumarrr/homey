@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->bigInteger('amount_cents');
             $table->date('paid_on');
-            $table->string('note')->nullable();
+            $table->string('name');
             $table->timestamps();
 
             $table->index(['family_id', 'paid_on']);

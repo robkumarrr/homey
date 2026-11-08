@@ -22,6 +22,7 @@ trait ExpenseValidationRules
     protected function expenseRules(?Expense $expense = null): array
     {
         return [
+            'name' => ['required', 'string', 'max:255'],
             'amount' => ['required', 'string', new MoneyAmount],
             'category_id' => [
                 'required',
@@ -33,7 +34,6 @@ trait ExpenseValidationRules
                         ->when($expense, fn (Builder $query, Expense $expense) => $query->orWhere('id', $expense->category_id))),
             ],
             'paid_on' => ['required', 'date_format:Y-m-d'],
-            'note' => ['nullable', 'string', 'max:255'],
         ];
     }
 

@@ -21,12 +21,12 @@ class ExpenseFactory extends Factory
     {
         return [
             'family_id' => Family::factory(),
+            'name' => fake()->company(),
             'category_id' => fn (array $attributes) => Category::factory()->create([
                 'family_id' => $attributes['family_id'],
             ]),
             'amount_cents' => fake()->numberBetween(100, 50_000),
             'paid_on' => fake()->dateTimeBetween('-1 month')->format('Y-m-d'),
-            'note' => fake()->company(),
         ];
     }
 }

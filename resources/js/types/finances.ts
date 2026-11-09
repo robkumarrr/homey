@@ -81,5 +81,33 @@ export type DeletedExpense = {
     deleted_at: string;
 };
 
+export type RepeatFrequency = 'once' | 'weekly' | 'monthly' | 'yearly';
+
+/** A bill. "Commitment" is its name in code. */
+export type Commitment = {
+    id: number;
+    name: string;
+    category_id: number;
+    payment_method_id: number | null;
+    amount_varies: boolean;
+    frequency: RepeatFrequency;
+    interval: number;
+    starts_on: string;
+    ends_on: string | null;
+    archived: boolean;
+    /** The next due date from today, or null once the bill has ended. */
+    next_due_on: string | null;
+    /** What's owed on the next due date, or null while it needs entering. */
+    next_amount_cents: number | null;
+};
+
+/** One due date of a bill. */
+export type Occurrence = {
+    commitment_id: number;
+    due_on: string;
+    /** What's owed on this date, or null while it needs entering. */
+    amount_cents: number | null;
+};
+
 export type SortKey = 'date' | 'amount' | 'category' | 'name';
 export type SortDirection = 'asc' | 'desc';

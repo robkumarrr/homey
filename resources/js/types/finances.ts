@@ -53,10 +53,21 @@ export type Category = {
     archived: boolean;
 };
 
+export type PaymentMethodKind = 'credit_card' | 'bank_account';
+
+export type PaymentMethod = {
+    id: number;
+    name: string;
+    kind: PaymentMethodKind;
+    last_four: string | null;
+    archived: boolean;
+};
+
 export type Expense = {
     id: number;
     name: string;
     category_id: number;
+    payment_method_id: number | null;
     amount_cents: number;
     paid_on: string;
 };

@@ -17,12 +17,14 @@ class RecordExpense
         int $amountCents,
         int $categoryId,
         string $paidOn,
+        ?int $paymentMethodId = null,
     ): Expense {
         $expense = new Expense([
             'name' => $name,
             'amount_cents' => $amountCents,
             'category_id' => $categoryId,
             'paid_on' => $paidOn,
+            'payment_method_id' => $paymentMethodId,
         ]);
         $expense->created_by = $recordedBy->id;
         $expense->save();

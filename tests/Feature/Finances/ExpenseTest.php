@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\PaymentMethod;
 use App\Models\Scopes\FamilyScope;
 use App\Models\User;
 
@@ -83,6 +84,41 @@ test('an archived category cannot be used for a new expense', function () {
         ->assertSessionHasErrors('category_id');
 });
 
+test('an expense can record which payment method paid, and it can be cleared', function () {
+    $method = PaymentMethod::factory()->create(['family_id' => $this->family->id]);
+
+    $this->actingAs($this->user)
+        ->post(route('finances.expenses.store'), expenseInput(['payment_method_id' => $method->id]))
+        ->assertSessionHasNoErrors();
+
+    $expense = asFamily($this->family, fn () => Expense::sole());
+
+    expect($expense->payment_method_id)->toBe($method->id);
+
+    $this->actingAs($this->user)
+        ->patch(route('finances.expenses.update', $expense), expenseInput(['payment_method_id' => '']))
+        ->assertSessionHasNoErrors();
+
+    expect($expense->refresh()->payment_method_id)->toBeNull();
+});
+
+test('another family\'s or an archived payment method cannot be used', function (bool $ours) {
+    $method = PaymentMethod::factory()->create($ours ? ['family_id' => $this->family->id, 'archived_at' => now()] : []);
+
+    $this->actingAs($this->user)
+        ->post(route('finances.expenses.store'), expenseInput(['payment_method_id' => $method->id]))
+        ->assertSessionHasErrors('payment_method_id');
+})->with(['another family\'s' => false, 'archived' => true]);
+
+test('editing an expense can keep its archived payment method', function () {
+    $archived = PaymentMethod::factory()->archived()->create(['family_id' => $this->family->id]);
+    $expense = Expense::factory()->create(['family_id' => $this->family->id, 'category_id' => $this->category->id, 'payment_method_id' => $archived->id]);
+
+    $this->actingAs($this->user)
+        ->patch(route('finances.expenses.update', $expense), expenseInput(['payment_method_id' => $archived->id]))
+        ->assertSessionHasNoErrors();
+});
+
 test('a member can edit an expense', function () {
     $expense = Expense::factory()->create(['family_id' => $this->family->id, 'category_id' => $this->category->id]);
     $newCategory = asFamily($this->family, fn () => $this->family->categories()->where('id', '!=', $this->category->id)->firstOrFail());
@@ -105,9 +141,11 @@ test('a member can edit an expense', function () {
 });
 
 test('editing an expense can be undone with its previous values', function () {
+    $method = PaymentMethod::factory()->create(['family_id' => $this->family->id]);
     $expense = Expense::factory()->create([
         'family_id' => $this->family->id,
         'category_id' => $this->category->id,
+        'payment_method_id' => $method->id,
         'name' => 'Loblaws',
         'amount_cents' => 120000,
         'paid_on' => '2026-11-01',
@@ -121,6 +159,7 @@ test('editing an expense can be undone with its previous values', function () {
             'amount' => '1200.00',
             'category_id' => $this->category->id,
             'paid_on' => '2026-11-01',
+            'payment_method_id' => $method->id,
         ]);
 });
 

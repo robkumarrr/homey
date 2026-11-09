@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { Form, Link } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import ExpenseController from '@/actions/App/Http/Controllers/Finances/ExpenseController';
 import InputError from '@/components/InputError.vue';
@@ -15,12 +15,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { centsToInput, todayIso } from '@/lib/money';
-import type { Category, Expense } from '@/types';
+import { index as paymentMethodsIndex } from '@/routes/payment-methods';
+import type { Category, Expense, PaymentMethod } from '@/types';
 
 /** Add a new expense, or edit `expense` when one is given. */
 const props = defineProps<{
     expense: Expense | null;
     categories: Category[];
+    paymentMethods: PaymentMethod[];
 }>();
 
 const open = defineModel<boolean>('open', { required: true });
@@ -33,6 +35,13 @@ const selectableCategories = computed(() =>
     props.categories.filter(
         (category) =>
             !category.archived || category.id === props.expense?.category_id,
+    ),
+);
+
+const selectablePaymentMethods = computed(() =>
+    props.paymentMethods.filter(
+        (method) =>
+            !method.archived || method.id === props.expense?.payment_method_id,
     ),
 );
 
@@ -134,6 +143,42 @@ const selectClass =
                         />
                         <InputError :message="errors.paid_on" />
                     </div>
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="expense-payment-method">
+                        Paid with
+                        <span class="font-normal text-muted-foreground"
+                            >(optional)</span
+                        >
+                    </Label>
+                    <select
+                        v-if="selectablePaymentMethods.length"
+                        id="expense-payment-method"
+                        name="payment_method_id"
+                        :class="selectClass"
+                        :aria-invalid="!!errors.payment_method_id"
+                    >
+                        <option value="">Not recorded</option>
+                        <option
+                            v-for="method in selectablePaymentMethods"
+                            :key="method.id"
+                            :value="method.id"
+                            :selected="method.id === expense?.payment_method_id"
+                        >
+                            {{ method.name }}
+                        </option>
+                    </select>
+                    <p v-else class="text-sm text-muted-foreground">
+                        Add your cards and accounts in
+                        <Link
+                            :href="paymentMethodsIndex()"
+                            class="underline underline-offset-4"
+                            >Settings</Link
+                        >
+                        to record which one paid.
+                    </p>
+                    <InputError :message="errors.payment_method_id" />
                 </div>
 
                 <DialogFooter>

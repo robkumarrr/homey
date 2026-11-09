@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { centsToInput, todayIso } from '@/lib/money';
+import { centsToInput } from '@/lib/money';
 import type { Category, Expense, PaymentMethod } from '@/types';
 
 /** Record a new expense, or edit `expense` when one is given. */
@@ -16,6 +16,8 @@ defineProps<{
     expense: Expense | null;
     categories: Category[];
     paymentMethods: PaymentMethod[];
+    /** The date a new expense starts on. */
+    defaultDate: string;
 }>();
 
 const emit = defineEmits<{ saved: [] }>();
@@ -80,7 +82,7 @@ const emit = defineEmits<{ saved: [] }>();
                     id="expense-date"
                     name="paid_on"
                     type="date"
-                    :default-value="expense?.paid_on ?? todayIso()"
+                    :default-value="expense?.paid_on ?? defaultDate"
                     :aria-invalid="!!errors.paid_on"
                 />
                 <InputError :message="errors.paid_on" />

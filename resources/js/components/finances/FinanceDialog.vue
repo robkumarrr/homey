@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { defaultDateIn } from '@/lib/money';
 import type { Category, Commitment, Expense, PaymentMethod } from '@/types';
 
 /**
@@ -21,10 +22,14 @@ const props = defineProps<{
     bill: Commitment | null;
     categories: Category[];
     paymentMethods: PaymentMethod[];
+    /** The month being viewed (YYYY-MM), which new entries default into. */
+    month: string;
 }>();
 
 const open = defineModel<boolean>('open', { required: true });
 const mode = defineModel<'expense' | 'bill'>('mode', { required: true });
+
+const defaultDate = computed(() => defaultDateIn(props.month));
 
 const editing = computed(() => props.expense !== null || props.bill !== null);
 
@@ -95,6 +100,7 @@ watch(open, (isOpen) => isOpen && formKey.value++);
                     :expense="expense"
                     :categories="categories"
                     :payment-methods="paymentMethods"
+                    :default-date="defaultDate"
                     class="transition-opacity duration-200"
                     :class="
                         mode !== 'expense' && 'pointer-events-none opacity-0'
@@ -108,6 +114,7 @@ watch(open, (isOpen) => isOpen && formKey.value++);
                     :bill="bill"
                     :categories="categories"
                     :payment-methods="paymentMethods"
+                    :default-date="defaultDate"
                     class="transition-opacity duration-200"
                     :class="mode !== 'bill' && 'pointer-events-none opacity-0'"
                     :inert="mode !== 'bill'"

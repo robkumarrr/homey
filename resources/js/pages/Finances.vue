@@ -348,6 +348,7 @@ const showDeleted = ref(false);
             :bill="editingBill"
             :categories="categories"
             :payment-methods="paymentMethods"
+            :month="month"
         />
     </div>
 </template>

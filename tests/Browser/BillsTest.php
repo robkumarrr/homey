@@ -101,3 +101,17 @@ test('a month\'s amount can be entered, and a fixed bill\'s changed from a month
         ->assertSee('$1,850.00')
         ->assertNoJavaScriptErrors();
 });
+
+test('new bills and expenses start in the month being viewed', function () {
+    $viewing = now()->subMonthsNoOverflow(2);
+
+    visit(route('finances', ['month' => $viewing->format('Y-m')]))
+        ->click('@add-button')
+        ->assertValue('expense-date', $viewing->toDateString())
+        ->click('@mode-bill')
+        ->assertValue('bill-starts-on', $viewing->toDateString())
+        ->navigate(route('finances'))
+        ->click('@add-bill-button')
+        ->assertValue('bill-starts-on', now()->toDateString())
+        ->assertNoJavaScriptErrors();
+});

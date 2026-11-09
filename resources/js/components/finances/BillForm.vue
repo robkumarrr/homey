@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { todayIso } from '@/lib/money';
 import { repeatOptionFor, repeatOptions } from '@/lib/schedule';
 import type { Category, Commitment, PaymentMethod } from '@/types';
 
@@ -18,6 +17,8 @@ const props = defineProps<{
     bill: Commitment | null;
     categories: Category[];
     paymentMethods: PaymentMethod[];
+    /** The first due date a new bill starts on. */
+    defaultDate: string;
 }>();
 
 const emit = defineEmits<{ saved: [] }>();
@@ -142,7 +143,7 @@ const repeat = computed(() =>
                     id="bill-starts-on"
                     name="starts_on"
                     type="date"
-                    :default-value="bill?.starts_on ?? todayIso()"
+                    :default-value="bill?.starts_on ?? defaultDate"
                     :aria-invalid="!!errors.starts_on"
                 />
             </div>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\HouseController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -26,6 +27,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('settings/house', [HouseController::class, 'edit'])->name('house.edit');
     Route::patch('settings/house', [HouseController::class, 'update'])->name('house.update');
+
+    Route::get('settings/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('settings/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::patch('settings/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::post('settings/categories/{category}/archive', [CategoryController::class, 'archive'])->name('categories.archive');
+    Route::delete('settings/categories/{category}/archive', [CategoryController::class, 'unarchive'])->name('categories.unarchive');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });

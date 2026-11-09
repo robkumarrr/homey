@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { Ellipsis, History, Pencil, Plus, Trash2 } from '@lucide/vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { Ellipsis, History, Pencil, Plus, Tags, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import CategoryBadge from '@/components/finances/CategoryBadge.vue';
 import DeleteExpenseDialog from '@/components/finances/DeleteExpenseDialog.vue';
@@ -16,6 +16,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { formatCents, formatDay } from '@/lib/money';
+import { index as categoriesIndex } from '@/routes/categories';
 import type {
     Category,
     DeletedExpense,
@@ -91,6 +92,21 @@ const showDeleted = ref(false);
                     Finances
                 </h1>
                 <div class="flex items-center gap-1.5">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        class="text-muted-foreground"
+                        as-child
+                    >
+                        <Link
+                            :href="categoriesIndex()"
+                            aria-label="Categories"
+                            data-test="categories-link"
+                        >
+                            <Tags />
+                            <span class="hidden sm:inline">Categories</span>
+                        </Link>
+                    </Button>
                     <Button
                         size="sm"
                         variant="ghost"

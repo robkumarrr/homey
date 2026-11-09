@@ -5,11 +5,11 @@ namespace App\Models;
 use App\Concerns\BelongsToFamily;
 use App\Enums\CategoryColour;
 use App\Enums\CategoryIcon;
+use Carbon\CarbonImmutable;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -18,9 +18,9 @@ use Illuminate\Support\Carbon;
  * @property CategoryIcon $icon
  * @property CategoryColour $colour
  * @property int $position
- * @property Carbon|null $archived_at
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $archived_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 #[Fillable(['name', 'icon', 'colour', 'position'])]
 class Category extends Model

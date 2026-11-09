@@ -7,7 +7,25 @@ export type CategoryIcon =
     | 'tv'
     | 'paw-print'
     | 'hammer'
-    | 'circle-ellipsis';
+    | 'circle-ellipsis'
+    | 'shirt'
+    | 'heart-pulse'
+    | 'baby'
+    | 'graduation-cap'
+    | 'gift'
+    | 'plane'
+    | 'fuel'
+    | 'dumbbell'
+    | 'coffee'
+    | 'wifi'
+    | 'shield'
+    | 'piggy-bank'
+    | 'landmark'
+    | 'wrench'
+    | 'sprout'
+    | 'sofa'
+    | 'gamepad-2'
+    | 'hand-heart';
 
 export type CategoryColour =
     | 'blue'
@@ -18,7 +36,14 @@ export type CategoryColour =
     | 'violet'
     | 'teal'
     | 'amber'
-    | 'zinc';
+    | 'zinc'
+    | 'red'
+    | 'orange'
+    | 'lime'
+    | 'cyan'
+    | 'indigo'
+    | 'fuchsia'
+    | 'rose';
 
 export type Category = {
     id: number;

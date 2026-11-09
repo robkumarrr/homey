@@ -43,7 +43,7 @@ A specific bank account or credit card the family pays from, such as "TD chequin
 _Avoid_: Account, card, funding source
 
 **Category**:
-A family's label for grouping spending, such as Groceries or Utilities. Every expense has exactly one.
+A family's label for grouping spending, such as Groceries or Utilities, with an icon and colour. Every expense has exactly one. An archived category stays on old expenses but can't be picked for new ones.
 _Avoid_: Tag, type, bucket
 
 **Utility**:

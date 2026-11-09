@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Category;
 use App\Models\Expense;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -59,4 +60,17 @@ test('another family\'s expenses and categories never show', function () {
             ->has('expenses', 0)
             ->where('spentCents', 0)
             ->has('categories', 9));
+});
+
+test('an expense in an archived category still shows that category', function () {
+    $this->travelTo('2026-11-15');
+    $archived = Category::factory()->archived()->create(['family_id' => $this->family->id, 'name' => 'Gym', 'position' => 20]);
+    Expense::factory()->create(['family_id' => $this->family->id, 'category_id' => $archived->id, 'paid_on' => '2026-11-10']);
+
+    $this->actingAs($this->user)
+        ->get(route('finances'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('expenses.0.category_id', $archived->id)
+            ->where('categories.9.id', $archived->id)
+            ->where('categories.9.archived', true));
 });

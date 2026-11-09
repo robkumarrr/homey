@@ -10,7 +10,6 @@ use App\Http\Requests\Finances\ExpenseUpdateRequest;
 use App\Models\Expense;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 /**
  * Every change confirms with a toast whose Undo replays the opposite request:
@@ -81,13 +80,5 @@ class ExpenseController extends Controller
         ]);
 
         return back();
-    }
-
-    /**
-     * @param  array{url: string, method: string, data?: array<string, mixed>}  $undo
-     */
-    private function toastWithUndo(string $message, array $undo): void
-    {
-        Inertia::flash('toast', ['type' => 'success', 'message' => $message, 'undo' => $undo]);
     }
 }

@@ -17,4 +17,11 @@ enum CategoryColour: string
     case Teal = 'teal';
     case Amber = 'amber';
     case Zinc = 'zinc';
+    case Red = 'red';
+    case Orange = 'orange';
+    case Lime = 'lime';
+    case Cyan = 'cyan';
+    case Indigo = 'indigo';
+    case Fuchsia = 'fuchsia';
+    case Rose = 'rose';
 }

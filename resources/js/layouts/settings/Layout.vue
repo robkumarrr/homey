@@ -8,6 +8,7 @@ import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as categoriesIndex } from '@/routes/categories';
 import { edit as editHouse } from '@/routes/house';
+import { index as paymentMethodsIndex } from '@/routes/payment-methods';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
@@ -26,6 +27,10 @@ const sidebarNavItems: NavItem[] = [
         href: categoriesIndex(),
     },
     {
+        title: 'Payment methods',
+        href: paymentMethodsIndex(),
+    },
+    {
         title: 'Security',
         href: editSecurity(),
     },
@@ -42,7 +47,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
     <div class="px-4 py-6">
         <Heading
             title="Settings"
-            description="Manage your profile, house, categories and account settings"
+            description="Manage your profile, house, finances and account settings"
         />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">

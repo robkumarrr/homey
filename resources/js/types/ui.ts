@@ -10,6 +10,6 @@ export type FlashToast = {
     undo?: {
         url: string;
         method: 'get' | 'post' | 'patch' | 'put' | 'delete';
-        data?: Record<string, string | number>;
+        data?: Record<string, string | number | null>;
     };
 };

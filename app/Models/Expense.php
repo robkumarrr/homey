@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $family_id
  * @property int $category_id
+ * @property int|null $payment_method_id
  * @property int|null $created_by
  * @property int $amount_cents
  * @property Carbon $paid_on
@@ -25,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Category $category
  */
-#[Fillable(['name', 'category_id', 'amount_cents', 'paid_on'])]
+#[Fillable(['name', 'category_id', 'payment_method_id', 'amount_cents', 'paid_on'])]
 class Expense extends Model
 {
     use BelongsToFamily;

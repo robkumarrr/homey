@@ -29,6 +29,7 @@ class ExpenseController extends Controller
             amountCents: $request->amountCents(),
             categoryId: $request->integer('category_id'),
             paidOn: $request->string('paid_on')->toString(),
+            paymentMethodId: $request->integer('payment_method_id') ?: null,
         );
 
         $this->toastWithUndo(__('Added ":name".', ['name' => $expense->name]), [
@@ -49,6 +50,7 @@ class ExpenseController extends Controller
             'amount' => number_format($expense->amount_cents / 100, 2, '.', ''),
             'category_id' => $expense->category_id,
             'paid_on' => $expense->paid_on->toDateString(),
+            'payment_method_id' => $expense->payment_method_id,
         ];
 
         $expense->update([
@@ -56,6 +58,7 @@ class ExpenseController extends Controller
             'amount_cents' => $request->amountCents(),
             'category_id' => $request->integer('category_id'),
             'paid_on' => $request->string('paid_on')->toString(),
+            'payment_method_id' => $request->integer('payment_method_id') ?: null,
         ]);
 
         $this->toastWithUndo(__('Saved ":name".', ['name' => $expense->name]), [

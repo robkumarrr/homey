@@ -21,6 +21,7 @@ import type {
     Category,
     DeletedExpense,
     Expense,
+    PaymentMethod,
     SortDirection,
     SortKey,
 } from '@/types';
@@ -28,6 +29,7 @@ import type {
 const props = defineProps<{
     month: string;
     categories: Category[];
+    paymentMethods: PaymentMethod[];
     expenses: Expense[];
     spentCents: number;
     deletedExpenses: DeletedExpense[];
@@ -40,6 +42,13 @@ const category = (categoryId: number): Category =>
     categoriesById.value.get(categoryId)!;
 const categoryFor = (expense: Expense): Category =>
     category(expense.category_id);
+const paymentMethodsById = computed(
+    () => new Map(props.paymentMethods.map((method) => [method.id, method])),
+);
+const paymentMethodName = (expense: Expense): string | undefined =>
+    expense.payment_method_id === null
+        ? undefined
+        : paymentMethodsById.value.get(expense.payment_method_id)?.name;
 const categoryPosition = (expense: Expense): number =>
     props.categories.indexOf(categoryFor(expense));
 
@@ -202,6 +211,12 @@ const showDeleted = ref(false);
                         >
                             {{ formatDay(expense.paid_on) }}
                         </p>
+                        <p
+                            v-if="paymentMethodName(expense)"
+                            class="truncate text-[11px] leading-4 text-muted-foreground"
+                        >
+                            {{ paymentMethodName(expense) }}
+                        </p>
                     </div>
                     <span class="shrink-0 text-sm tabular-nums">
                         {{ formatCents(expense.amount_cents) }}
@@ -245,6 +260,7 @@ const showDeleted = ref(false);
             v-model:open="dialogOpen"
             :expense="editing"
             :categories="categories"
+            :payment-methods="paymentMethods"
         />
     </div>
 </template>

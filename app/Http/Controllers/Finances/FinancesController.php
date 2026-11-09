@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\DeletedExpense;
 use App\Models\Expense;
+use App\Models\PaymentMethod;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,7 +32,7 @@ class FinancesController extends Controller
             ->whereBetween('paid_on', [$month->toDateString(), $month->endOfMonth()->toDateString()])
             ->orderByDesc('paid_on')
             ->orderByDesc('id')
-            ->get(['id', 'name', 'category_id', 'amount_cents', 'paid_on']);
+            ->get(['id', 'name', 'category_id', 'payment_method_id', 'amount_cents', 'paid_on']);
 
         return Inertia::render('Finances', [
             'month' => $month->format('Y-m'),
@@ -45,6 +46,17 @@ class FinancesController extends Controller
                     'icon' => $category->icon,
                     'colour' => $category->colour,
                     'archived' => $category->archived_at !== null,
+                ]),
+            'paymentMethods' => PaymentMethod::query()
+                ->orderBy('position')
+                ->orderBy('name')
+                ->get(['id', 'name', 'kind', 'last_four', 'archived_at'])
+                ->map(fn (PaymentMethod $method) => [
+                    'id' => $method->id,
+                    'name' => $method->name,
+                    'kind' => $method->kind,
+                    'last_four' => $method->last_four,
+                    'archived' => $method->archived_at !== null,
                 ]),
             'expenses' => $expenses,
             'spentCents' => (int) $expenses->sum('amount_cents'),

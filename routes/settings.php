@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\CategoryController;
 use App\Http\Controllers\Settings\HouseController;
+use App\Http\Controllers\Settings\PaymentMethodController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -33,6 +34,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('settings/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::post('settings/categories/{category}/archive', [CategoryController::class, 'archive'])->name('categories.archive');
     Route::delete('settings/categories/{category}/archive', [CategoryController::class, 'unarchive'])->name('categories.unarchive');
+
+    Route::get('settings/payment-methods', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
+    Route::post('settings/payment-methods', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
+    Route::patch('settings/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update'])->name('payment-methods.update');
+    Route::post('settings/payment-methods/{paymentMethod}/archive', [PaymentMethodController::class, 'archive'])->name('payment-methods.archive');
+    Route::delete('settings/payment-methods/{paymentMethod}/archive', [PaymentMethodController::class, 'unarchive'])->name('payment-methods.unarchive');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 });

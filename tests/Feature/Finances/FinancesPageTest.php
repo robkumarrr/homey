@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\PaymentMethod;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -73,4 +74,18 @@ test('an expense in an archived category still shows that category', function ()
             ->where('expenses.0.category_id', $archived->id)
             ->where('categories.9.id', $archived->id)
             ->where('categories.9.archived', true));
+});
+
+test('finances lists the family\'s payment methods and which one paid each expense', function () {
+    $this->travelTo('2026-11-15');
+    $method = PaymentMethod::factory()->create(['family_id' => $this->family->id, 'name' => 'TD Visa']);
+    PaymentMethod::factory()->create(['name' => 'Not ours']);
+    Expense::factory()->create(['family_id' => $this->family->id, 'category_id' => $this->category->id, 'payment_method_id' => $method->id, 'paid_on' => '2026-11-10']);
+
+    $this->actingAs($this->user)
+        ->get(route('finances'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('paymentMethods', 1)
+            ->where('paymentMethods.0.name', 'TD Visa')
+            ->where('expenses.0.payment_method_id', $method->id));
 });

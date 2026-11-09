@@ -43,6 +43,16 @@ test('a member can record an expense', function (string $amount, int $cents) {
     ['5', 500],
 ]);
 
+test('adding an expense can be undone by deleting it', function () {
+    $response = $this->actingAs($this->user)->post(route('finances.expenses.store'), expenseInput());
+
+    $expense = asFamily($this->family, fn () => Expense::sole());
+
+    $response->assertInertiaFlash('toast.message', 'Added "Loblaws".')
+        ->assertInertiaFlash('toast.undo.url', route('finances.expenses.destroy', $expense))
+        ->assertInertiaFlash('toast.undo.method', 'delete');
+});
+
 test('the amount must be a plain amount above zero', function (string $amount) {
     $this->actingAs($this->user)
         ->post(route('finances.expenses.store'), expenseInput(['amount' => $amount]))
@@ -92,6 +102,26 @@ test('a member can edit an expense', function () {
         ->and($expense->category_id)->toBe($newCategory->id)
         ->and($expense->paid_on->toDateString())->toBe('2026-11-02')
         ->and($expense->name)->toBe('Costco');
+});
+
+test('editing an expense can be undone with its previous values', function () {
+    $expense = Expense::factory()->create([
+        'family_id' => $this->family->id,
+        'category_id' => $this->category->id,
+        'name' => 'Loblaws',
+        'amount_cents' => 120000,
+        'paid_on' => '2026-11-01',
+    ]);
+
+    $this->actingAs($this->user)
+        ->patch(route('finances.expenses.update', $expense), expenseInput(['name' => 'Costco']))
+        ->assertInertiaFlash('toast.undo.method', 'patch')
+        ->assertInertiaFlash('toast.undo.data', [
+            'name' => 'Loblaws',
+            'amount' => '1200.00',
+            'category_id' => $this->category->id,
+            'paid_on' => '2026-11-01',
+        ]);
 });
 
 test('editing an expense can keep its archived category', function () {

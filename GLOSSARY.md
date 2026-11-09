@@ -95,6 +95,10 @@ Repeats a set interval after it was last done or paid, like a furnace filter eve
 Retired from everyday views but kept, with all its history intact. Archiving is how things are removed.
 _Avoid_: Deleted, inactive
 
+**Recently deleted**:
+Where a deleted expense waits for 30 days, so it can be restored, before it is purged for good. Deleting is for mistakes; things that are retired are archived instead.
+_Avoid_: Trash, bin (in UI copy), archive
+
 **Project**:
 A one-off piece of work on a house, like replacing the eavestroughs. It is a project, not a task, when it involves a quote, a contract or more than one payment.
 _Avoid_: Renovation (as the general term), job

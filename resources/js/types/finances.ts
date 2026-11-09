@@ -36,5 +36,14 @@ export type Expense = {
     paid_on: string;
 };
 
+export type DeletedExpense = {
+    id: number;
+    name: string;
+    amount_cents: number;
+    category_id: number;
+    paid_on: string;
+    deleted_at: string;
+};
+
 export type SortKey = 'date' | 'amount' | 'category' | 'name';
 export type SortDirection = 'asc' | 'desc';

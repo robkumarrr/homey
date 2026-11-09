@@ -29,3 +29,7 @@ export function todayIso(): string {
 
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+/** "Fri, Nov 7" for a moment in time (ISO 8601), in the viewer's own timezone. */
+export const formatInstant = (iso: string): string =>
+    dayFormat.format(new Date(iso));

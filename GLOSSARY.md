@@ -23,8 +23,12 @@ _Avoid_: Invite code, family code
 ## Money
 
 **Commitment**:
-A promise to pay on a schedule, usually recurring: a subscription, bill, loan or insurance premium, with an expected amount. It records what is owed, never what was paid. The app calls it a Bill; "commitment" is the name in code.
+A promise to pay on a schedule, usually recurring: a subscription, bill, loan or insurance premium, with an expected amount (or one entered each time, for bills like hydro). It records what is owed, never what was paid, and can stop after a final payment date. The app calls it a Bill; "commitment" is the name in code.
 _Avoid_: Subscription (as the general term), recurring expense
+
+**Amount change**:
+A new amount for a commitment from one of its due dates on, such as a mortgage after a rate change. Earlier dates keep the amount before it.
+_Avoid_: Price change, re-price (which is for one occurrence)
 
 **Occurrence**:
 One date of a commitment or an income, such as "the October Netflix". A single occurrence can be moved, re-priced or skipped without changing the schedule. A commitment's occurrence is paid when an expense is recorded against it.

@@ -81,8 +81,9 @@ class Commitment extends Model
     /**
      * Before the bill starts changing each time, give each due date up to the
      * end of this month, or up to its next bill if that's later, the amount it
-     * shows now as its own. Switching never blanks an amount you can see or
-     * the bill about to be paid; only later dates ask for theirs.
+     * shows now as its own, and so too each later date an amount change was
+     * entered on. Switching never blanks an amount you can see, the bill
+     * about to be paid, or one you typed in; other later dates ask for theirs.
      */
     public function keepShownAmounts(): void
     {
@@ -90,8 +91,11 @@ class Commitment extends Model
 
         $today = CarbonImmutable::today();
         $until = $today->endOfMonth()->max($this->recurrence()->nextOnOrAfter($today) ?? $today);
+        $enteredLater = $this->amounts
+            ->map(fn (CommitmentAmount $amount) => $amount->effective_on)
+            ->filter(fn (CarbonImmutable $effectiveOn) => $effectiveOn->greaterThan($until) && $this->isDueOn($effectiveOn));
 
-        foreach ($this->recurrence()->between($this->starts_on, $until) as $dueOn) {
+        foreach ([...$this->recurrence()->between($this->starts_on, $until), ...$enteredLater] as $dueOn) {
             $amountCents = $this->amountDueOn($dueOn);
             $hasOwnAmount = $this->exceptions->contains(fn (CommitmentException $exception) => $exception->original_due_on->equalTo($dueOn));
 

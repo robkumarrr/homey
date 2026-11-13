@@ -232,6 +232,19 @@ test('switching to changing each time keeps every amount already shown and asks 
         ->toBe(['2026-10' => 9000, '2026-11' => 9000, '2026-12' => 9000, '2027-01' => null]);
 });
 
+test('switching to changing each time keeps a later month\'s amount entered for that month and the ones after', function () {
+    $bill = decemberBill();
+    $this->actingAs($this->user)
+        ->put(route('finances.commitments.amounts.update', $bill), ['due_on' => '2027-02-05', 'onward_amount' => '95', 'month_amount' => '']);
+
+    $this->actingAs($this->user)
+        ->patch(route('finances.commitments.update', $bill), editedBill($bill->fresh(), ['amount_varies' => '1']))
+        ->assertSessionHasNoErrors();
+
+    expect(amountsByMonth($bill, ['2026-12', '2027-01', '2027-02', '2027-03']))
+        ->toBe(['2026-12' => 9000, '2027-01' => null, '2027-02' => 9500, '2027-03' => null]);
+});
+
 test('months added by starting earlier while switching to changing each time ask for their amount', function () {
     $bill = decemberBill();
     $this->actingAs($this->user)->patch(route('finances.commitments.update', $bill), editedBill($bill, ['starts_on' => '2026-10-05']));
